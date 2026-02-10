@@ -1,5 +1,4 @@
 
-*.txt
 tmp/
 .DS_Store
 
