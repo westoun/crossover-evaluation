@@ -43,9 +43,7 @@ class GeneticAlgorithm:
                     if random.random() < self.params.mutation_prob:
                         offspring[i] = self.params.mutation.mutate(circuit)
 
-            fitness_scores = [
-                self.params.fitness.score(circuit) for circuit in offspring
-            ]
+            fitness_scores = self.params.fitness.score(offspring)
 
             best_fitness = min(fitness_scores)
             mean_fitness = mean(fitness_scores)
