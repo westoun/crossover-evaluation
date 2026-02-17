@@ -1,0 +1,13 @@
+version: "3.4"
+services:
+  crossover-eval:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      bash -c "
+      echo start
+      && python3 grid_search.py
+      "
+    volumes:
+      - ./results:/app/results
