@@ -21,9 +21,9 @@ if __name__ == "__main__":
     population_size = 1000
     max_generations = 50_000
 
-    for mutation_prob in [0.0, 0.01, 0.05, 0.1, 0.2]:
-        for crossover_prob in [0.0, 0.1, 0.3, 0.6, 1.0]:
-            for seed in seed_num:
+    for seed in range(seed_num):
+        for mutation_prob in [0.01, 0.01, 0.05, 0.1, 0.2]:
+            for crossover_prob in [0.0, 0.1, 0.3, 0.6, 1.0]:
 
                 random.seed(seed)
                 np_random.seed(seed)
