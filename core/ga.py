@@ -29,18 +29,19 @@ class GeneticAlgorithm:
         for generation in range(1, self.params.max_generations + 1):
             offspring = [deepcopy(circuit) for circuit in population]
 
-            # Shuffle to avoid crossover in the same proximity across
-            # generations.
-            random.shuffle(offspring)
+            if generation > 1:
+                # Shuffle to avoid crossover in the same proximity across
+                # generations.
+                random.shuffle(offspring)
 
-            for i in range(0, len(offspring), 2):
-                if random.random() < self.params.crossover_prob:
-                    offspring[i], offspring[i +
-                                            1] = self.params.crossover.cross(offspring[i], offspring[i + 1])
+                for i in range(0, len(offspring), 2):
+                    if random.random() < self.params.crossover_prob:
+                        offspring[i], offspring[i +
+                                                1] = self.params.crossover.cross(offspring[i], offspring[i + 1])
 
-            for i, circuit in enumerate(offspring):
-                if random.random() < self.params.mutation_prob:
-                    offspring[i] = self.params.mutation.mutate(circuit)
+                for i, circuit in enumerate(offspring):
+                    if random.random() < self.params.mutation_prob:
+                        offspring[i] = self.params.mutation.mutate(circuit)
 
             fitness_scores = [
                 self.params.fitness.score(circuit) for circuit in offspring
