@@ -11,19 +11,19 @@ from random import randint, sample, choices
 from typing import List, Type
 
 
-def generate_random_circuit(qubit_num: int, gate_count: int, gate_set: List[Type[IGate]]) -> Circuit:
+def random_circuit(qubit_num: int, gate_count: int, gate_set: List[Type[IGate]]) -> Circuit:
     circuit = Circuit(qubit_num)
 
     for _ in range(gate_count):
 
-        gate = generate_random_gate(
+        gate = random_gate(
             qubit_num=qubit_num, GateSet=gate_set)
         circuit.apply(gate)
 
     return circuit
 
 
-def generate_random_gate(qubit_num: int, GateSet: List[Type]) -> IGate:
+def random_gate(qubit_num: int, GateSet: List[Type]) -> IGate:
     # assume each gate config to be equally likely
 
     weights = []

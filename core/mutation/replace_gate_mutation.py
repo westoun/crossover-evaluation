@@ -4,7 +4,7 @@ from random import randint
 from typing import List
 
 from .mutation import Mutation
-from core.utils.random_ import generate_random_gate
+from core.utils.random_ import random_gate
 
 
 class ReplaceGateMutation(Mutation):
@@ -19,6 +19,6 @@ class ReplaceGateMutation(Mutation):
 
     def mutate(self, circuit: Circuit) -> Circuit:
         target_i = randint(0, len(circuit.gates) - 1)
-        circuit.gates[target_i] = generate_random_gate(
+        circuit.gates[target_i] = random_gate(
             self.qubit_num, self.gate_set)
         return circuit

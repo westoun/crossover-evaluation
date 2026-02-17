@@ -9,7 +9,7 @@ from .mutation import Mutation, ReplaceGateMutation
 from .crossover import Crossover
 from .fitness import Fitness
 from .selection import Selection
-from .utils.random_ import generate_random_circuit
+from .utils.random_ import random_circuit
 from .gate_sets import CLIFFORD_PLUS_T
 
 
@@ -40,7 +40,7 @@ class GeneticAlgorithm:
 
     def run(self):
         population = [
-            generate_random_circuit(
+            random_circuit(
                 qubit_num=self.params.qubit_num,
                 gate_count=self.params.gate_count,
                 gate_set=self.params.gate_set
