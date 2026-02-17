@@ -18,8 +18,8 @@ if __name__ == "__main__":
     seed_num = 10
     gate_count = 10
     qubit_num = 4
-    population_size = 100
-    max_generations = 100_000
+    population_size = 1000
+    max_generations = 50_000
 
     for mutation_prob in [0.0, 0.01, 0.05, 0.1, 0.2]:
         for crossover_prob in [0.0, 0.1, 0.3, 0.6, 1.0]:
