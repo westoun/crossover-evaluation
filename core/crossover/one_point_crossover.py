@@ -10,7 +10,7 @@ from .crossover import Crossover
 class OnePointCrossover(Crossover):
     name: str = "One Point Crossover"
 
-    def cross(cls, circuit1: Circuit, circuit2: Circuit) -> Tuple[Circuit, Circuit]:
+    def cross(self, circuit1: Circuit, circuit2: Circuit) -> Tuple[Circuit, Circuit]:
 
         max_position = min(len(circuit1.gates), len(circuit2.gates))
         crx_idx = randint(1, max_position - 1)
