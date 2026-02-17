@@ -17,7 +17,7 @@ def get_timestamp() -> str:
 
 
 def log_params(params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.crossover.name.lower()}_{params.qubit_num}q{params.gate_count}g{params.seed}s_config.json"
+    target_path = f"{params.result_dir}/{params.crossover.name.lower()}_{params.qubit_num}q{params.gate_count}g{params.seed}s_{params.tag}_config.json"
 
     config = {
         "start": get_timestamp(),
@@ -39,7 +39,7 @@ def log_params(params: ExperimentParams) -> None:
 
 
 def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitness_stdev: float, params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.crossover.name.lower()}_{params.qubit_num}q{params.gate_count}g{params.seed}s_fitness.csv"
+    target_path = f"{params.result_dir}/{params.crossover.name.lower()}_{params.qubit_num}q{params.gate_count}g{params.seed}s_{params.tag}_fitness.csv"
 
     add_header = not os.path.exists(target_path)
 

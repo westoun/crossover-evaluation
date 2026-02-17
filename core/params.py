@@ -29,3 +29,4 @@ class ExperimentParams:
 
     seed: int
     result_dir: str
+    tag: str = ""
