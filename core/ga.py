@@ -1,44 +1,22 @@
 
-from dataclasses import dataclass
 from copy import deepcopy
-from quasim.gates import IGate
+from statistics import mean, stdev
 import random
-from typing import List
 
-from .mutation import Mutation, ReplaceGateMutation
-from .crossover import Crossover
-from .fitness import Fitness
-from .selection import Selection
 from .utils.random_ import random_circuit
-from .gate_sets import CLIFFORD_PLUS_T
-
-
-@dataclass
-class GAParams:
-    crossover: Crossover
-    mutation: Mutation
-
-    mutation_prob: float
-    crossover_prob: float
-
-    fitness: Fitness
-    selection: Selection
-
-    population_size: int
-    max_generations: int
-
-    qubit_num: int
-    gate_count: int
-    gate_set: List[IGate]
+from .params import ExperimentParams
+from .utils.logging import log_params, log_fitness
 
 
 class GeneticAlgorithm:
-    params: GAParams
+    params: ExperimentParams
 
-    def __init__(self, params: GAParams):
+    def __init__(self, params: ExperimentParams):
         self.params = params
 
     def run(self):
+        log_params(self.params)
+
         population = [
             random_circuit(
                 qubit_num=self.params.qubit_num,
@@ -67,6 +45,17 @@ class GeneticAlgorithm:
             fitness_scores = [
                 self.params.fitness.score(circuit) for circuit in offspring
             ]
+
+            best_fitness = min(fitness_scores)
+            mean_fitness = mean(fitness_scores)
+            fitness_stdev = stdev(fitness_scores)
+            log_fitness(
+                generation=generation,
+                best_fitness=best_fitness,
+                mean_fitness=mean_fitness,
+                fitness_stdev=fitness_stdev,
+                params=self.params
+            )
 
             population = self.params.selection.select(
                 offspring, fitness_scores, k=self.params.population_size

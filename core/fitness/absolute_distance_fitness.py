@@ -6,6 +6,8 @@ from .fitness import Fitness
 
 
 class AbsoluteDistanceFitness(Fitness):
+    name: str = "Absolute Distance Fitness"
+
     target_unitary: Any
 
     def __init__(self, target_unitary: Any):
