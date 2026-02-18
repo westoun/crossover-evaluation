@@ -125,6 +125,12 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str) ->
 
         ax.plot(df["generation"], df["avg_best"], label=label)
 
+        lower_bound = df["avg_best"] - df["std_best"]
+        upper_bound = df["avg_best"] + df["std_best"]
+        ax.fill_between(
+            df["generation"], lower_bound, upper_bound, alpha=0.3
+        )
+
     ax.set_ylim(0)
 
     ax.set_xlabel("generation")
@@ -151,6 +157,12 @@ def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str) ->
         df = experiment.fitness_scores
 
         ax.plot(df["generation"], df["avg_mean"], label=label)
+
+        lower_bound = df["avg_mean"] - df["std_mean"]
+        upper_bound = df["avg_mean"] + df["std_mean"]
+        ax.fill_between(
+            df["generation"], lower_bound, upper_bound, alpha=0.3
+        )
 
     ax.set_ylim(0)
 
