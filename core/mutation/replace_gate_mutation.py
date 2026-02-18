@@ -17,7 +17,9 @@ class ReplaceGateMutation(Mutation):
         self.qubit_num = qubit_num
         self.gate_set = gate_set
 
-    def mutate(self, circuit: Circuit) -> Circuit:
+    def mutate(self, gate: IGate) -> IGate:
+        return random_gate(
+            self.qubit_num, self.gate_set)
         target_i = randint(0, len(circuit.gates) - 1)
         circuit.gates[target_i] = random_gate(
             self.qubit_num, self.gate_set)

@@ -40,8 +40,10 @@ class GeneticAlgorithm:
                                                 1] = self.params.crossover.cross(offspring[i], offspring[i + 1])
 
                 for i, circuit in enumerate(offspring):
-                    if random.random() < self.params.mutation_prob:
-                        offspring[i] = self.params.mutation.mutate(circuit)
+                    for j, gate in enumerate(circuit.gates):
+                        if random.random() < self.params.mutation_prob:
+                            offspring[i].gates[j] = self.params.mutation.mutate(
+                                gate)
 
             fitness_scores = self.params.fitness.score(offspring)
 
