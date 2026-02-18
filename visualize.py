@@ -164,9 +164,64 @@ def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str) ->
     plt.clf()
 
 
+def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> None:
+    x = []
+    y = []
+    final_fitness = []
+
+    for experiment in experiments:
+        x.append(experiment.crossover_prob)
+        y.append(experiment.mutation_prob)
+        final_fitness.append(experiment.fitness_scores.iloc[-1]["mean_best"])
+
+    plt.scatter(x, y, c=final_fitness, cmap="magma_r")
+
+    plt.xlabel("crossover probability")
+    plt.ylabel("mutation probability")
+
+    plt.ylim(0)
+
+    plt.colorbar()
+    plt.grid()
+
+    plt.savefig(target_path, bbox_inches='tight')
+    plt.clf()
+
+
+def plot_grid_mean_fitness(experiments: List[Experiment], target_path: str) -> None:
+    x = []
+    y = []
+    final_fitness = []
+
+    for experiment in experiments:
+        x.append(experiment.crossover_prob)
+        y.append(experiment.mutation_prob)
+        final_fitness.append(experiment.fitness_scores.iloc[-1]["mean_mean"])
+
+    plt.scatter(x, y, c=final_fitness, cmap="magma_r")
+
+    plt.xlabel("crossover probability")
+    plt.ylabel("mutation probability")
+
+    plt.ylim(0)
+
+    plt.colorbar()
+    plt.grid()
+
+    plt.savefig(target_path, bbox_inches='tight')
+    plt.clf()
+
+
 if __name__ == "__main__":
 
     experiments = load_experiments(results_dir="results")
 
-    plot_best_fitness_scores(experiments, target_path="results/best.png")
-    plot_mean_fitness_scores(experiments, target_path="results/mean.png")
+    plot_best_fitness_scores(
+        experiments, target_path="results/best_fitness_per_generation.png")
+    plot_mean_fitness_scores(
+        experiments, target_path="results/mean_fitness_per_generation.png")
+
+    plot_grid_best_fitness(
+        experiments, target_path="results/best_fitness_on_grid.png")
+    plot_grid_mean_fitness(
+        experiments, target_path="results/mean_fitness_on_grid.png")
