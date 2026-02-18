@@ -97,13 +97,13 @@ def merge_dfs(dfs: List[pd.DataFrame]) -> pd.DataFrame:
 
     total_df = pd.concat(dfs)
 
-    mean_best = total_df.groupby("generation")["best_fitness"].mean()
+    avg_best = total_df.groupby("generation")["best_fitness"].mean()
     std_best = total_df.groupby("generation")["best_fitness"].std()
-    mean_mean = total_df.groupby("generation")["mean_fitness"].mean()
+    avg_mean = total_df.groupby("generation")["mean_fitness"].mean()
     std_mean = total_df.groupby("generation")["mean_fitness"].std()
 
-    merged_df = pd.concat([mean_best, std_best, mean_mean, std_mean], keys=[
-                          "mean_best", "std_best", "mean_mean", "std_mean"], axis=1)
+    merged_df = pd.concat([avg_best, std_best, avg_mean, std_mean], keys=[
+                          "avg_best", "std_best", "avg_mean", "std_mean"], axis=1)
     merged_df = merged_df.reset_index()
     merged_df.fillna(0, inplace=True)
 
@@ -123,7 +123,7 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str) ->
 
         df = experiment.fitness_scores
 
-        ax.plot(df["generation"], df["mean_best"], label=label)
+        ax.plot(df["generation"], df["avg_best"], label=label)
 
     ax.set_ylim(0)
 
@@ -150,7 +150,7 @@ def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str) ->
 
         df = experiment.fitness_scores
 
-        ax.plot(df["generation"], df["mean_mean"], label=label)
+        ax.plot(df["generation"], df["avg_mean"], label=label)
 
     ax.set_ylim(0)
 
@@ -172,7 +172,7 @@ def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> N
     for experiment in experiments:
         x.append(experiment.crossover_prob)
         y.append(experiment.mutation_prob)
-        final_fitness.append(experiment.fitness_scores.iloc[-1]["mean_best"])
+        final_fitness.append(experiment.fitness_scores.iloc[-1]["avg_best"])
 
     plt.scatter(x, y, c=final_fitness, cmap="magma_r")
 
@@ -196,7 +196,7 @@ def plot_grid_mean_fitness(experiments: List[Experiment], target_path: str) -> N
     for experiment in experiments:
         x.append(experiment.crossover_prob)
         y.append(experiment.mutation_prob)
-        final_fitness.append(experiment.fitness_scores.iloc[-1]["mean_mean"])
+        final_fitness.append(experiment.fitness_scores.iloc[-1]["avg_mean"])
 
     plt.scatter(x, y, c=final_fitness, cmap="magma_r")
 
