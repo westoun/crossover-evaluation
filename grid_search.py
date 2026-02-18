@@ -25,7 +25,7 @@ if __name__ == "__main__":
     for seed_i in range(seed_num):
         seed = seed_offset + seed_i
 
-        for mutation_prob in [0.01, 0.05, 0.1, 0.2]:
+        for mutation_prob in [0.001, 0.01, 0.05, 0.1, 0.2]:
             for crossover_prob in [0.0, 0.1, 0.3, 0.6, 1.0]:
 
                 random.seed(seed)
