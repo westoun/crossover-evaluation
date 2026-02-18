@@ -17,8 +17,8 @@ from core.utils.random_ import random_circuit
 
 if __name__ == "__main__":
     gate_count = 10
-    qubit_num = 5
-    population_size = 100
+    qubit_num = 3
+    population_size = 1000
     max_generations = 1000
 
     mutation_prob = 0.01
