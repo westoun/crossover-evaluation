@@ -25,7 +25,9 @@ class Experiment:
     fitness: str
     selection: str
 
+    source_paths: List[str]
     seeds: List[int]
+
     fitness_scores: pd.DataFrame
     fitness_scores_per_seed: List[pd.DataFrame]
 
@@ -70,14 +72,19 @@ def load_experiments(results_dir: str = "results") -> List[Experiment]:
             fitness=config["fitness"],
             selection=config["selection"],
 
+            source_paths = [
+                config_path
+            ],
             seeds=[
                 config["seed"]
             ],
+
             fitness_scores=None,
             fitness_scores_per_seed=[experiment_fitness]
         )
 
         if experiment in experiments:
+            experiments[experiment].source_paths.append(experiment.source_paths[0])
             experiments[experiment].seeds.append(experiment.seeds[0])
             experiments[experiment].fitness_scores_per_seed.append(
                 experiment.fitness_scores_per_seed[0])
@@ -86,8 +93,15 @@ def load_experiments(results_dir: str = "results") -> List[Experiment]:
 
     experiments: List[Experiment] = list(experiments.values())
     for experiment in experiments:
-        experiment.fitness_scores = merge_dfs(
-            experiment.fitness_scores_per_seed)
+        try:
+            experiment.fitness_scores = merge_dfs(
+                experiment.fitness_scores_per_seed)
+        except AssertionError as e:
+            print(f"Assertion error raised for the files at:")
+            for path in experiment.source_paths:
+                print("\t" + path)
+            raise
+
     return experiments
 
 
