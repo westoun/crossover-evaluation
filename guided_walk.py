@@ -18,11 +18,8 @@ if __name__ == "__main__":
     gate_count = 10
     pairings_per_seed = 500
 
-    for qubit_num in [3, 4, 5]:
+    for qubit_num in [3]: #, 4, 5]:
         for gate_count in [10, 15, 20]:
-            if qubit_num == 3 and gate_count == 10:
-                continue
-
             print(f"Starting guided walk with {qubit_num}q and {gate_count}g")
 
             experiment = {
@@ -73,6 +70,33 @@ if __name__ == "__main__":
                             "child_fitness": []
                         }
                     )
+
+                    # points_of_difference = []
+                    # for i, (parent1_gate, parent2_gate) in enumerate(zip(parent1.gates, parent2.gates)):
+                    #     if parent1_gate.__repr__() != parent2_gate.__repr__():
+                    #         points_of_difference.append(i)
+
+                    # random.shuffle(points_of_difference)
+
+                    # for point_of_differece in points_of_difference:
+                    #     child1 = deepcopy(parent1)
+                    #     child2 = deepcopy(parent2)
+
+                    #     child1.gates[point_of_differece], child2.gates[point_of_differece] = child2.gates[point_of_differece], child1.gates[point_of_differece]
+
+                    #     child1_fitness = fitness.score(
+                    #         [child1]
+                    #     )[0]
+                    #     child2_fitness = fitness.score(
+                    #         [child2]
+                    #     )[0]
+
+                    #     experiment["results"][-1]["child_fitness"].append(
+                    #         (child1_fitness, child2_fitness)
+                    #     )
+
+                    #     parent1 = child1 
+                    #     parent2 = child2
 
                     for split_point in range(1, gate_count):
                         child1 = deepcopy(parent1)
