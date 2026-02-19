@@ -116,6 +116,7 @@ if __name__ == "__main__":
             )
 
         print(f"\tAverage percentage of children better than best parent: {mean(improvement_percentage)}")
+        print(f"\tAverage fitness of best child: {mean(min_child_fitness)}")
 
         print("")
         print(
