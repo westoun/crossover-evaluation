@@ -77,16 +77,19 @@ if __name__ == "__main__":
         experiment = load_json(f"results/{file_name}")
 
         print(
-            f"Starting evaluation of experiment with {experiment['config']['qubit_num']}q and {experiment['config']['gate_count']}g")
+            f"\nStarting evaluation of experiment with {experiment['config']['qubit_num']}q and {experiment['config']['gate_count']}g")
 
         parent1_fitness = []
         parent2_fitness = []
         min_parent_fitness = []
         max_parent_fitness = []
         mean_parent_fitness = []
+        parent_fitness_span = []
 
         min_child_fitness = []
         mean_child_fitness = []
+
+        improvement_percentage = []
 
         for pairing in experiment["results"]:
             parent1_fitness.append(pairing["parent_fitness"][0])
@@ -94,25 +97,45 @@ if __name__ == "__main__":
             min_parent_fitness.append(min(pairing["parent_fitness"]))
             max_parent_fitness.append(max(pairing["parent_fitness"]))
             mean_parent_fitness.append(mean(pairing["parent_fitness"]))
+
+            parent_fitness_span.append(
+                abs(pairing["parent_fitness"][0] - pairing["parent_fitness"][1]))
+
+            child_fitness_scores = flatten_child_fitness_scores(pairing)
             min_child_fitness.append(
-                min(flatten_child_fitness_scores(pairing))
+                min(child_fitness_scores)
             )
             mean_child_fitness.append(
-                mean(flatten_child_fitness_scores(pairing))
+                mean(child_fitness_scores)
             )
 
+            improvement_percentage.append(
+                len([
+                    child_score for child_score in child_fitness_scores if child_score < min(pairing["parent_fitness"])
+                ]) / len(child_fitness_scores)
+            )
+
+        print(f"\tAverage percentage of children better than best parent: {mean(improvement_percentage)}")
+
+        print("")
         print(
-            f"\tCorrelation between second parent and best child: {pearsonr(parent2_fitness, min_child_fitness)}")
+            f"\tCorrelation second parent - best child: {pearsonr(parent2_fitness, min_child_fitness)}")
         print(
-            f"\tCorrelation between second parent and mean child: {pearsonr(parent2_fitness, mean_child_fitness)}")
+            f"\tCorrelation second parent - mean child: {pearsonr(parent2_fitness, mean_child_fitness)}")
         print(
-            f"\tCorrelation between best parent and best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
+            f"\tCorrelation best parent - best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
         print(
-            f"\tCorrelation between best parent and mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
+            f"\tCorrelation best parent - mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
         print(
-            f"\tCorrelation between worst parent and best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
+            f"\tCorrelation worst parent an-d best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
+
+        print("")
         print(
-            f"\tCorrelation between worst parent and mean child: {pearsonr(max_parent_fitness, mean_child_fitness)}")
+            f"\tCorrelation best parent - percentage of improvements: {pearsonr(min_parent_fitness, improvement_percentage)}")
+        print(
+            f"\tCorrelation second parent - percentage of improvements: {pearsonr(parent2_fitness, improvement_percentage)}")
+        print(
+            f"\tCorrelation parent spread - percentage of improvements: {pearsonr(parent_fitness_span, improvement_percentage)}")
 
         plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness,
                              target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_best.png")
