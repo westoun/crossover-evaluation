@@ -4,3 +4,4 @@ numpy==2.0.2
 pandas==2.3.3
 quasim==1.0.0
 scipy==1.13.1
+tqdm==4.67.3

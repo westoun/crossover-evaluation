@@ -43,54 +43,68 @@ def plot_grid_as_landscape(
     plt.clf()
 
 
-def plot_grid_as_scatter(parent1_fitness: List[float], parent2_fitness: List[float], child_fitness: List[float]) -> None:
+def plot_grid_as_scatter(parent1_fitness: List[float], parent2_fitness: List[float], child_fitness: List[float], target_path: str = None) -> None:
     plt.scatter(parent1_fitness, parent2_fitness,
                 c=child_fitness, cmap="magma_r", s=1)
 
     plt.xlabel("parent 1 fitness")
     plt.ylabel("parent 2 fitness")
 
-    plt.ylim(0)
+    plt.ylim(0, max(parent1_fitness + parent2_fitness))
+    plt.xlim(0, max(parent1_fitness + parent2_fitness))
 
     plt.colorbar()
     plt.grid()
 
-    # plt.savefig(target_path, bbox_inches='tight')
+    if target_path is not None:
+        plt.savefig(target_path, bbox_inches='tight')
 
     plt.show()
     plt.clf()
 
 
 if __name__ == "__main__":
-    experiments = load_json("results/guided_walk.json")
 
-    parent1_fitness = []
-    parent2_fitness = []
-    min_parent_fitness = []
-    max_parent_fitness = []
+    file_names = os.listdir("results")
+    file_names.sort()
 
-    min_child_fitness = []
-    mean_child_fitness = []
+    for file_name in file_names:
+        if not file_name.startswith("guided_walk"):
+            continue
 
-    for pairing in experiments["results"]:
-        parent1_fitness.append(pairing["parent_fitness"][0])
-        parent2_fitness.append(pairing["parent_fitness"][1])
-        min_parent_fitness.append(min(pairing["parent_fitness"]))
-        max_parent_fitness.append(min(pairing["parent_fitness"]))
-        min_child_fitness.append(
-            min(flatten_child_fitness_scores(pairing))
-        )
-        mean_child_fitness.append(
-            mean(flatten_child_fitness_scores(pairing))
-        )
+        experiment = load_json(f"results/{file_name}")
 
-    print(
-        f"Correlation between second parent and best child: {pearsonr(parent2_fitness, min_child_fitness)}")
-    print(
-        f"Correlation between second parent and mean child: {pearsonr(parent2_fitness, mean_child_fitness)}")
-    print(
-        f"Correlation between best parent and best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
-    print(
-        f"Correlation between best parent and mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
+        print(
+            f"Starting evaluation of experiment with {experiment['config']['qubit_num']}q and {experiment['config']['gate_count']}g")
 
-    plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness)
+        parent1_fitness = []
+        parent2_fitness = []
+        min_parent_fitness = []
+        max_parent_fitness = []
+
+        min_child_fitness = []
+        mean_child_fitness = []
+
+        for pairing in experiment["results"]:
+            parent1_fitness.append(pairing["parent_fitness"][0])
+            parent2_fitness.append(pairing["parent_fitness"][1])
+            min_parent_fitness.append(min(pairing["parent_fitness"]))
+            max_parent_fitness.append(min(pairing["parent_fitness"]))
+            min_child_fitness.append(
+                min(flatten_child_fitness_scores(pairing))
+            )
+            mean_child_fitness.append(
+                mean(flatten_child_fitness_scores(pairing))
+            )
+
+        print(
+            f"\tCorrelation between second parent and best child: {pearsonr(parent2_fitness, min_child_fitness)}")
+        print(
+            f"\tCorrelation between second parent and mean child: {pearsonr(parent2_fitness, mean_child_fitness)}")
+        print(
+            f"\tCorrelation between best parent and best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
+        print(
+            f"\tCorrelation between best parent and mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
+
+        plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness,
+                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g.png")
