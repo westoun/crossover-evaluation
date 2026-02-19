@@ -127,7 +127,7 @@ if __name__ == "__main__":
         print(
             f"\tCorrelation best parent - mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
         print(
-            f"\tCorrelation worst parent an-d best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
+            f"\tCorrelation worst parent - best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
 
         print("")
         print(
