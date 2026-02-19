@@ -94,14 +94,23 @@ def load_experiments(results_dir: str = "results") -> List[Experiment]:
 
     experiments: List[Experiment] = list(experiments.values())
     for experiment in experiments:
-        try:
-            experiment.fitness_scores = merge_dfs(
-                experiment.fitness_scores_per_seed)
-        except AssertionError as e:
-            print(f"Assertion error raised for the files at:")
-            for path in experiment.source_paths:
-                print("\t" + path)
-            raise
+        fitness_dfs = experiment.fitness_scores_per_seed
+        lengths = [len(df) for df in fitness_dfs]
+
+        entries_to_pop = [
+            i for i, length in enumerate(lengths) if length < max(lengths)
+        ]
+
+        for entry_to_pop in reversed(entries_to_pop):
+            print(
+                f"Excluding fitness of {experiment.source_paths[entry_to_pop]} due to length mismatch.")
+
+            experiment.source_paths.pop(entry_to_pop)
+            experiment.seeds.pop(entry_to_pop)
+            experiment.fitness_scores_per_seed.pop(entry_to_pop)
+
+        experiment.fitness_scores = merge_dfs(
+            experiment.fitness_scores_per_seed)
 
     return experiments
 
