@@ -43,7 +43,7 @@ def plot_grid_as_landscape(
     plt.clf()
 
 
-def plot_grid_as_scatter(parent1_fitness: List[float], parent2_fitness: List[float], child_fitness: List[float], target_path: str = None) -> None:
+def plot_grid_as_scatter(parent1_fitness: List[float], parent2_fitness: List[float], child_fitness: List[float], target_path: str = None, show: bool = False) -> None:
     plt.scatter(parent1_fitness, parent2_fitness,
                 c=child_fitness, cmap="magma_r", s=1)
 
@@ -59,7 +59,9 @@ def plot_grid_as_scatter(parent1_fitness: List[float], parent2_fitness: List[flo
     if target_path is not None:
         plt.savefig(target_path, bbox_inches='tight')
 
-    plt.show()
+    if show:
+        plt.show()
+
     plt.clf()
 
 
@@ -69,7 +71,7 @@ if __name__ == "__main__":
     file_names.sort()
 
     for file_name in file_names:
-        if not file_name.startswith("guided_walk"):
+        if not (file_name.startswith("guided_walk") and file_name.endswith(".json")):
             continue
 
         experiment = load_json(f"results/{file_name}")
@@ -81,6 +83,7 @@ if __name__ == "__main__":
         parent2_fitness = []
         min_parent_fitness = []
         max_parent_fitness = []
+        mean_parent_fitness = []
 
         min_child_fitness = []
         mean_child_fitness = []
@@ -90,6 +93,7 @@ if __name__ == "__main__":
             parent2_fitness.append(pairing["parent_fitness"][1])
             min_parent_fitness.append(min(pairing["parent_fitness"]))
             max_parent_fitness.append(min(pairing["parent_fitness"]))
+            mean_parent_fitness.append(mean(pairing["parent_fitness"]))
             min_child_fitness.append(
                 min(flatten_child_fitness_scores(pairing))
             )
@@ -107,4 +111,6 @@ if __name__ == "__main__":
             f"\tCorrelation between best parent and mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
 
         plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness,
-                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g.png")
+                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_best.png")
+        plot_grid_as_scatter(parent1_fitness, parent2_fitness, mean_child_fitness,
+                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_mean.png")
