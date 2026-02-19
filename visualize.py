@@ -292,6 +292,18 @@ if __name__ == "__main__":
     plot_fitness_per_generation(
         experiments, measure="mean", target_path="results/mean_fitness_per_generation.png")
 
+    for mutation_prob in get_mutation_probs(experiments):
+        plot_fitness_per_generation(
+            experiments, measure="best", target_path=f"results/best_fitness_per_generation_mp{mutation_prob}.png",
+            mutation_prob=mutation_prob
+        )
+
+    for crossover_prob in get_crossover_probs(experiments):
+        plot_fitness_per_generation(
+            experiments, measure="best", target_path=f"results/best_fitness_per_generation_cp{crossover_prob}.png",
+            crossover_prob=crossover_prob
+        )
+
     plot_grid_as_scatter(
         experiments, measure="best", target_path="results/best_fitness_on_grid.png")
     plot_grid_as_scatter(
