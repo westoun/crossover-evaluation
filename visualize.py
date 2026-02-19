@@ -230,7 +230,7 @@ def plot_grid_as_scatter(experiments: List[Experiment], measure: str, target_pat
     plt.clf()
 
 
-def plot_grid_as_landscape(experiments: List[Experiment], measure: str, target_path: str) -> None:
+def plot_grid_as_landscape(experiments: List[Experiment], measure: str, target_path: str, show: bool = False) -> None:
     if measure not in ["best", "mean"]:
         raise NotImplementedError(
             f"Measure '{measure}' has not been implemented.")
@@ -261,7 +261,10 @@ def plot_grid_as_landscape(experiments: List[Experiment], measure: str, target_p
     ax.invert_zaxis()
 
     plt.savefig(target_path, bbox_inches='tight')
-    # plt.show()
+
+    if show:
+        plt.show()
+
     plt.clf()
 
 
@@ -310,7 +313,8 @@ if __name__ == "__main__":
         experiments, measure="mean", target_path="results/mean_fitness_on_grid.png")
 
     plot_grid_as_landscape(
-        experiments, measure="best", target_path="results/best_fitness_on_landscape.png"
+        experiments, measure="best", target_path="results/best_fitness_on_landscape.png",
+        show=True
     )
     plot_grid_as_landscape(
         experiments, measure="mean", target_path="results/mean_fitness_on_landscape.png"
