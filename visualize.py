@@ -72,7 +72,7 @@ def load_experiments(results_dir: str = "results") -> List[Experiment]:
             fitness=config["fitness"],
             selection=config["selection"],
 
-            source_paths = [
+            source_paths=[
                 config_path
             ],
             seeds=[
@@ -84,7 +84,8 @@ def load_experiments(results_dir: str = "results") -> List[Experiment]:
         )
 
         if experiment in experiments:
-            experiments[experiment].source_paths.append(experiment.source_paths[0])
+            experiments[experiment].source_paths.append(
+                experiment.source_paths[0])
             experiments[experiment].seeds.append(experiment.seeds[0])
             experiments[experiment].fitness_scores_per_seed.append(
                 experiment.fitness_scores_per_seed[0])
@@ -214,6 +215,60 @@ def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> N
     plt.clf()
 
 
+def plot_landscape_best_fitness(experiments: List[Experiment], target_path: str) -> None:
+    x = []
+    y = []
+    z = []
+
+    for experiment in experiments:
+        x.append(experiment.crossover_prob)
+        y.append(experiment.mutation_prob)
+        z.append(experiment.fitness_scores.iloc[-1]["avg_best"])
+
+    ax = plt.axes(projection="3d")
+    ax.plot_trisurf(x, y, z, cmap="magma_r", linewidth=0.2)
+
+    # plt.scatter(x, y, c=final_fitness, cmap="magma_r")
+
+    ax.set_xlabel("crossover probability")
+    ax.set_ylabel("mutation probability")
+    ax.set_zlabel("fitness score")
+    ax.set_xlim(min(x), max(x))
+    ax.set_ylim(min(y), max(y))
+    ax.invert_zaxis()
+
+    plt.savefig(target_path, bbox_inches='tight')
+    # plt.show()
+    plt.clf()
+
+
+def plot_landscape_mean_fitness(experiments: List[Experiment], target_path: str) -> None:
+    x = []
+    y = []
+    z = []
+
+    for experiment in experiments:
+        x.append(experiment.crossover_prob)
+        y.append(experiment.mutation_prob)
+        z.append(experiment.fitness_scores.iloc[-1]["avg_mean"])
+
+    ax = plt.axes(projection="3d")
+    ax.plot_trisurf(x, y, z, cmap="magma_r", linewidth=0.2)
+
+    # plt.scatter(x, y, c=final_fitness, cmap="magma_r")
+
+    ax.set_xlabel("crossover probability")
+    ax.set_ylabel("mutation probability")
+    ax.set_zlabel("fitness score")
+    ax.set_xlim(min(x), max(x))
+    ax.set_ylim(min(y), max(y))
+    ax.invert_zaxis()
+
+    plt.savefig(target_path, bbox_inches='tight')
+    # plt.show()
+    plt.clf()
+
+
 def plot_grid_mean_fitness(experiments: List[Experiment], target_path: str) -> None:
     x = []
     y = []
@@ -251,3 +306,10 @@ if __name__ == "__main__":
         experiments, target_path="results/best_fitness_on_grid.png")
     plot_grid_mean_fitness(
         experiments, target_path="results/mean_fitness_on_grid.png")
+
+    plot_landscape_best_fitness(
+        experiments, target_path="results/best_fitness_on_landscape.png"
+    )
+    plot_landscape_mean_fitness(
+        experiments, target_path="results/mean_fitness_on_landscape.png"
+    )
