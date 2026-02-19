@@ -134,7 +134,7 @@ def merge_dfs(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     return merged_df
 
 
-def plot_best_fitness_scores(experiments: List[Experiment], target_path: str) -> None:
+def plot_best_fitness_scores(experiments: List[Experiment], target_path: str, plot_ci: bool = False) -> None:
     ax = plt.subplot()
 
     # Avoid repeating colors.
@@ -147,13 +147,14 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str) ->
 
         df = experiment.fitness_scores
 
-        ax.plot(df["generation"], df["avg_best"], label=label)
+        ax.plot(df["generation"], df["avg_best"], label=label, linewidth=1)
 
-        lower_bound = df["avg_best"] - df["std_best"]
-        upper_bound = df["avg_best"] + df["std_best"]
-        ax.fill_between(
-            df["generation"], lower_bound, upper_bound, alpha=0.3
-        )
+        if plot_ci:
+            lower_bound = df["avg_best"] - df["std_best"]
+            upper_bound = df["avg_best"] + df["std_best"]
+            ax.fill_between(
+                df["generation"], lower_bound, upper_bound, alpha=0.3
+            )
 
     ax.set_ylim(0)
 
@@ -167,7 +168,7 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str) ->
     plt.clf()
 
 
-def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str) -> None:
+def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str, plot_ci: bool = False) -> None:
     ax = plt.subplot()
 
     # Avoid repeating colors.
@@ -180,13 +181,14 @@ def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str) ->
 
         df = experiment.fitness_scores
 
-        ax.plot(df["generation"], df["avg_mean"], label=label)
+        ax.plot(df["generation"], df["avg_mean"], label=label, linewidth=1)
 
-        lower_bound = df["avg_mean"] - df["std_mean"]
-        upper_bound = df["avg_mean"] + df["std_mean"]
-        ax.fill_between(
-            df["generation"], lower_bound, upper_bound, alpha=0.3
-        )
+        if plot_ci:
+            lower_bound = df["avg_mean"] - df["std_mean"]
+            upper_bound = df["avg_mean"] + df["std_mean"]
+            ax.fill_between(
+                df["generation"], lower_bound, upper_bound, alpha=0.3
+            )
 
     ax.set_ylim(0)
 
