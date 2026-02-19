@@ -17,8 +17,9 @@ def get_timestamp() -> str:
 
 
 def log_params(params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.crossover.name.lower()}"
-    target_path += f"_{params.qubit_num}q{params.gate_count}g{params.seed}s{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path = f"{params.result_dir}/{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path += f"_{params.crossover.name.lower()}"
+    target_path += f"_{params.seed}s"
     if params.tag is not None:
         target_path += f"_{params.tag}"
     target_path += f"_config.json"
@@ -43,8 +44,9 @@ def log_params(params: ExperimentParams) -> None:
 
 
 def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitness_stdev: float, params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.crossover.name.lower()}"
-    target_path += f"_{params.qubit_num}q{params.gate_count}g{params.seed}s{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path = f"{params.result_dir}/{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path += f"_{params.crossover.name.lower()}"
+    target_path += f"_{params.seed}s"
     if params.tag is not None:
         target_path += f"_{params.tag}"
     target_path += f"_fitness.csv"
