@@ -134,7 +134,21 @@ def merge_dfs(dfs: List[pd.DataFrame]) -> pd.DataFrame:
     return merged_df
 
 
-def plot_best_fitness_scores(experiments: List[Experiment], target_path: str, plot_ci: bool = False) -> None:
+def plot_fitness_per_generation(experiments: List[Experiment], measure: str, target_path: str, plot_ci: bool = False, mutation_prob: float = None, crossover_prob: float = None) -> None:
+    if measure not in ["best", "mean"]:
+        raise NotImplementedError(
+            f"Measure '{measure}' has not been implemented.")
+
+    if mutation_prob is not None:
+        experiments = [
+            experiment for experiment in experiments if experiment.mutation_prob == mutation_prob
+        ]
+
+    if crossover_prob is not None:
+        experiments = [
+            experiment for experiment in experiments if experiment.crossover_prob == crossover_prob
+        ]
+
     ax = plt.subplot()
 
     # Avoid repeating colors.
@@ -147,19 +161,33 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str, pl
 
         df = experiment.fitness_scores
 
-        ax.plot(df["generation"], df["avg_best"], label=label, linewidth=1)
+        if measure == "best":
+            ax.plot(df["generation"], df["avg_best"], label=label, linewidth=1)
 
-        if plot_ci:
-            lower_bound = df["avg_best"] - df["std_best"]
-            upper_bound = df["avg_best"] + df["std_best"]
-            ax.fill_between(
-                df["generation"], lower_bound, upper_bound, alpha=0.3
-            )
+            if plot_ci:
+                lower_bound = df["avg_best"] - df["std_best"]
+                upper_bound = df["avg_best"] + df["std_best"]
+                ax.fill_between(
+                    df["generation"], lower_bound, upper_bound, alpha=0.3
+                )
+        else:
+            ax.plot(df["generation"], df["avg_mean"], label=label, linewidth=1)
+
+            if plot_ci:
+                lower_bound = df["avg_mean"] - df["std_mean"]
+                upper_bound = df["avg_mean"] + df["std_mean"]
+                ax.fill_between(
+                    df["generation"], lower_bound, upper_bound, alpha=0.3
+                )
 
     ax.set_ylim(0)
 
     ax.set_xlabel("generation")
-    ax.set_ylabel("avg. best fitness")
+
+    if measure == "best":
+        ax.set_ylabel("avg. best fitness")
+    else:
+        ax.set_ylabel("avg. mean fitness")
 
     plt.grid()
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -168,41 +196,11 @@ def plot_best_fitness_scores(experiments: List[Experiment], target_path: str, pl
     plt.clf()
 
 
-def plot_mean_fitness_scores(experiments: List[Experiment], target_path: str, plot_ci: bool = False) -> None:
-    ax = plt.subplot()
+def plot_grid_as_scatter(experiments: List[Experiment], measure: str, target_path: str) -> None:
+    if measure not in ["best", "mean"]:
+        raise NotImplementedError(
+            f"Measure '{measure}' has not been implemented.")
 
-    # Avoid repeating colors.
-    # Source: https://stackoverflow.com/questions/53199728/how-can-i-stop-matplotlib-from-repeating-colors
-    ax.set_prop_cycle('color', [plt.get_cmap('gist_rainbow')(
-        1.*i/len(experiments)) for i in range(len(experiments))])
-
-    for experiment in experiments:
-        label = f"mut_prob={experiment.mutation_prob}, cross_prob={experiment.crossover_prob}"
-
-        df = experiment.fitness_scores
-
-        ax.plot(df["generation"], df["avg_mean"], label=label, linewidth=1)
-
-        if plot_ci:
-            lower_bound = df["avg_mean"] - df["std_mean"]
-            upper_bound = df["avg_mean"] + df["std_mean"]
-            ax.fill_between(
-                df["generation"], lower_bound, upper_bound, alpha=0.3
-            )
-
-    ax.set_ylim(0)
-
-    ax.set_xlabel("generation")
-    ax.set_ylabel("avg. mean fitness")
-
-    plt.grid()
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-    plt.savefig(target_path, bbox_inches='tight')
-    plt.clf()
-
-
-def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> None:
     x = []
     y = []
     final_fitness = []
@@ -210,7 +208,13 @@ def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> N
     for experiment in experiments:
         x.append(experiment.crossover_prob)
         y.append(experiment.mutation_prob)
-        final_fitness.append(experiment.fitness_scores.iloc[-1]["avg_best"])
+
+        if measure == "best":
+            final_fitness.append(
+                experiment.fitness_scores.iloc[-1]["avg_best"])
+        else:
+            final_fitness.append(
+                experiment.fitness_scores.iloc[-1]["avg_mean"])
 
     plt.scatter(x, y, c=final_fitness, cmap="magma_r")
 
@@ -226,7 +230,11 @@ def plot_grid_best_fitness(experiments: List[Experiment], target_path: str) -> N
     plt.clf()
 
 
-def plot_landscape_best_fitness(experiments: List[Experiment], target_path: str) -> None:
+def plot_grid_as_landscape(experiments: List[Experiment], measure: str, target_path: str) -> None:
+    if measure not in ["best", "mean"]:
+        raise NotImplementedError(
+            f"Measure '{measure}' has not been implemented.")
+
     x = []
     y = []
     z = []
@@ -234,7 +242,11 @@ def plot_landscape_best_fitness(experiments: List[Experiment], target_path: str)
     for experiment in experiments:
         x.append(experiment.crossover_prob)
         y.append(experiment.mutation_prob)
-        z.append(experiment.fitness_scores.iloc[-1]["avg_best"])
+
+        if measure == "best":
+            z.append(experiment.fitness_scores.iloc[-1]["avg_best"])
+        else:
+            z.append(experiment.fitness_scores.iloc[-1]["avg_mean"])
 
     ax = plt.axes(projection="3d")
     ax.plot_trisurf(x, y, z, cmap="magma_r", linewidth=0.2)
@@ -253,74 +265,41 @@ def plot_landscape_best_fitness(experiments: List[Experiment], target_path: str)
     plt.clf()
 
 
-def plot_landscape_mean_fitness(experiments: List[Experiment], target_path: str) -> None:
-    x = []
-    y = []
-    z = []
-
-    for experiment in experiments:
-        x.append(experiment.crossover_prob)
-        y.append(experiment.mutation_prob)
-        z.append(experiment.fitness_scores.iloc[-1]["avg_mean"])
-
-    ax = plt.axes(projection="3d")
-    ax.plot_trisurf(x, y, z, cmap="magma_r", linewidth=0.2)
-
-    # plt.scatter(x, y, c=final_fitness, cmap="magma_r")
-
-    ax.set_xlabel("crossover probability")
-    ax.set_ylabel("mutation probability")
-    ax.set_zlabel("fitness score")
-    ax.set_xlim(min(x), max(x))
-    ax.set_ylim(min(y), max(y))
-    ax.invert_zaxis()
-
-    plt.savefig(target_path, bbox_inches='tight')
-    # plt.show()
-    plt.clf()
+def get_mutation_probs(experiments: List[Experiment]) -> List[float]:
+    mutation_probs = [
+        experiment.mutation_prob for experiment in experiments
+    ]
+    mutation_probs = list(set(mutation_probs))
+    mutation_probs.sort()
+    return mutation_probs
 
 
-def plot_grid_mean_fitness(experiments: List[Experiment], target_path: str) -> None:
-    x = []
-    y = []
-    final_fitness = []
-
-    for experiment in experiments:
-        x.append(experiment.crossover_prob)
-        y.append(experiment.mutation_prob)
-        final_fitness.append(experiment.fitness_scores.iloc[-1]["avg_mean"])
-
-    plt.scatter(x, y, c=final_fitness, cmap="magma_r")
-
-    plt.xlabel("crossover probability")
-    plt.ylabel("mutation probability")
-
-    plt.ylim(0)
-
-    plt.colorbar()
-    plt.grid()
-
-    plt.savefig(target_path, bbox_inches='tight')
-    plt.clf()
+def get_crossover_probs(experiments: List[Experiment]) -> List[float]:
+    crossover_probs = [
+        experiment.crossover_prob for experiment in experiments
+    ]
+    crossover_probs = list(set(crossover_probs))
+    crossover_probs.sort()
+    return crossover_probs
 
 
 if __name__ == "__main__":
 
     experiments = load_experiments(results_dir="results")
 
-    plot_best_fitness_scores(
-        experiments, target_path="results/best_fitness_per_generation.png")
-    plot_mean_fitness_scores(
-        experiments, target_path="results/mean_fitness_per_generation.png")
+    plot_fitness_per_generation(
+        experiments, measure="best", target_path="results/best_fitness_per_generation.png")
+    plot_fitness_per_generation(
+        experiments, measure="mean", target_path="results/mean_fitness_per_generation.png")
 
-    plot_grid_best_fitness(
-        experiments, target_path="results/best_fitness_on_grid.png")
-    plot_grid_mean_fitness(
-        experiments, target_path="results/mean_fitness_on_grid.png")
+    plot_grid_as_scatter(
+        experiments, measure="best", target_path="results/best_fitness_on_grid.png")
+    plot_grid_as_scatter(
+        experiments, measure="mean", target_path="results/mean_fitness_on_grid.png")
 
-    plot_landscape_best_fitness(
-        experiments, target_path="results/best_fitness_on_landscape.png"
+    plot_grid_as_landscape(
+        experiments, measure="best", target_path="results/best_fitness_on_landscape.png"
     )
-    plot_landscape_mean_fitness(
-        experiments, target_path="results/mean_fitness_on_landscape.png"
+    plot_grid_as_landscape(
+        experiments, measure="mean", target_path="results/mean_fitness_on_landscape.png"
     )
