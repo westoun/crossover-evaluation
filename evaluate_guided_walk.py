@@ -92,7 +92,7 @@ if __name__ == "__main__":
             parent1_fitness.append(pairing["parent_fitness"][0])
             parent2_fitness.append(pairing["parent_fitness"][1])
             min_parent_fitness.append(min(pairing["parent_fitness"]))
-            max_parent_fitness.append(min(pairing["parent_fitness"]))
+            max_parent_fitness.append(max(pairing["parent_fitness"]))
             mean_parent_fitness.append(mean(pairing["parent_fitness"]))
             min_child_fitness.append(
                 min(flatten_child_fitness_scores(pairing))
@@ -109,6 +109,10 @@ if __name__ == "__main__":
             f"\tCorrelation between best parent and best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
         print(
             f"\tCorrelation between best parent and mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
+        print(
+            f"\tCorrelation between worst parent and best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
+        print(
+            f"\tCorrelation between worst parent and mean child: {pearsonr(max_parent_fitness, mean_child_fitness)}")
 
         plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness,
                              target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_best.png")
