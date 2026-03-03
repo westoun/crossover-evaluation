@@ -115,8 +115,15 @@ if __name__ == "__main__":
                 ]) / len(child_fitness_scores)
             )
 
+        distance_to_parent = [
+            (child - parent) for child, parent in zip(min_child_fitness, min_parent_fitness)
+        ]
+
         print(f"\tAverage percentage of children better than best parent: {mean(improvement_percentage)}")
         print(f"\tAverage fitness of best child: {mean(min_child_fitness)}")
+
+        print(
+            f"\tCorrelation best parent - distance to best child: {pearsonr(min_parent_fitness, distance_to_parent)}")
 
         print("")
         print(
