@@ -104,6 +104,6 @@ if __name__ == "__main__":
 
     plt.grid()
 
+    plt.savefig("results/fdc_boxplots.png", bbox_inches='tight')
     plt.show()
-    # plt.savefig(target_path, bbox_inches='tight')
-    # plt.clf()
+    plt.clf()
