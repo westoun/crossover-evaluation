@@ -1,6 +1,6 @@
 
 from copy import deepcopy
-import editdistance
+import matplotlib.pyplot as plt
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
 from quasim.gates import IGate
@@ -17,11 +17,9 @@ from core.fitness import Fitness, AbsoluteDistanceFitness
 from core.gate_sets import CLIFFORD_PLUS_T
 from core.mutation import ReplaceGateMutation
 
+
 def get_gate_type(gate: IGate) -> str:
     return str(type(gate)).split(".")[-1].split("'")[0]
-
-
-
 
 
 if __name__ == "__main__":
@@ -61,7 +59,8 @@ if __name__ == "__main__":
         for i in range(gate_count):
             distance = i + 1
 
-            parents = random.choices(population=current_bin, k=circuits_per_bin)
+            parents = random.choices(
+                population=current_bin, k=circuits_per_bin)
 
             children = []
             for circuit in parents:
@@ -72,7 +71,7 @@ if __name__ == "__main__":
                 children.append(child)
 
             child_fitnesses = fitness.score(children)
-            
+
             distances.extend([
                 distance for _ in children
             ])
@@ -83,3 +82,28 @@ if __name__ == "__main__":
     correlation = stats.pearsonr(
         fitness_scores, distances).correlation
     print(f"Fitness distance correlaiton: {correlation}")
+
+    fig, ax = plt.subplots()
+
+    # sort by dict
+
+    nested_fitness_scores = []
+    for distance in list(range(1, gate_count + 1)):
+        nested_fitness_scores.append([])
+
+    for distance, fitness_score in zip(distances, fitness_scores):
+        nested_fitness_scores[distance - 1].append(fitness_score)
+
+    ax.boxplot(nested_fitness_scores,
+               tick_labels=list(range(1, gate_count + 1)))
+
+    plt.xlabel("distance")
+    plt.ylabel("fitness score")
+
+    plt.ylim(0)
+
+    plt.grid()
+
+    plt.show()
+    # plt.savefig(target_path, bbox_inches='tight')
+    # plt.clf()
