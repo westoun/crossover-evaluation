@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from scipy.stats.stats import pearsonr
+from scipy.stats import linregress
 from statistics import mean
 from typing import List, Dict
 
@@ -79,34 +80,46 @@ if __name__ == "__main__":
         print(
             f"\nStarting evaluation of experiment with {experiment['config']['qubit_num']}q and {experiment['config']['gate_count']}g")
 
+        qubit_num = experiment['config']['qubit_num']
+
         parent1_fitness = []
         parent2_fitness = []
-        min_parent_fitness = []
-        max_parent_fitness = []
         mean_parent_fitness = []
-        parent_fitness_span = []
+        parent2_change = []
 
-        min_child_fitness = []
         mean_child_fitness = []
+        best_child_fitness = []
+
+        mean_child_change = []
+        best_child_change = []
 
         improvement_percentage = []
 
         for pairing in experiment["results"]:
-            parent1_fitness.append(pairing["parent_fitness"][0])
-            parent2_fitness.append(pairing["parent_fitness"][1])
-            min_parent_fitness.append(min(pairing["parent_fitness"]))
-            max_parent_fitness.append(max(pairing["parent_fitness"]))
-            mean_parent_fitness.append(mean(pairing["parent_fitness"]))
+            parent1_fitness.append(-1 * pairing["parent_fitness"][0])
+            parent2_fitness.append(-1 * pairing["parent_fitness"][1])
 
-            parent_fitness_span.append(
-                abs(pairing["parent_fitness"][0] - pairing["parent_fitness"][1]))
+            parent2_change.append(
+                -1 * (pairing["parent_fitness"][1] -
+                      pairing["parent_fitness"][0])
+            )
+
+            mean_parent_fitness.append(-1 * mean(pairing["parent_fitness"]))
 
             child_fitness_scores = flatten_child_fitness_scores(pairing)
-            min_child_fitness.append(
-                min(child_fitness_scores)
-            )
+
             mean_child_fitness.append(
-                mean(child_fitness_scores)
+                -1 * mean(child_fitness_scores)
+            )
+            best_child_fitness.append(
+                -1 * min(child_fitness_scores)
+            )
+            mean_child_change.append(
+                -1 * (mean(child_fitness_scores) -
+                      pairing["parent_fitness"][0])
+            )
+            best_child_change.append(
+                -1 * (min(child_fitness_scores) - pairing["parent_fitness"][0])
             )
 
             improvement_percentage.append(
@@ -115,37 +128,17 @@ if __name__ == "__main__":
                 ]) / len(child_fitness_scores)
             )
 
-        distance_to_parent = [
-            (child - parent) for child, parent in zip(min_child_fitness, min_parent_fitness)
-        ]
+        x = [fitness / (2**(1.5 * qubit_num + 1))
+             for fitness in parent2_change]
+        y = [fitness / (2**(1.5 * qubit_num + 1))
+             for fitness in mean_child_change]
 
-        print(f"\tAverage percentage of children better than best parent: {mean(improvement_percentage)}")
-        print(f"\tAverage fitness of best child: {mean(min_child_fitness)}")
+        res = linregress(x, y)
+        print(
+            f"\t(mean child fitness - parent1_fitness) = {round(res.intercept, 2)} + {round(res.slope, 2)} * (parent2_fitness - parent1_fitness) [r^2={round(res.rvalue ** 2, 2)}]")
 
+        y = [fitness / (2**(1.5 * qubit_num + 1))
+             for fitness in best_child_change]
+        res = linregress(x, y)
         print(
-            f"\tCorrelation best parent - distance to best child: {pearsonr(min_parent_fitness, distance_to_parent)}")
-
-        print("")
-        print(
-            f"\tCorrelation second parent - best child: {pearsonr(parent2_fitness, min_child_fitness)}")
-        print(
-            f"\tCorrelation second parent - mean child: {pearsonr(parent2_fitness, mean_child_fitness)}")
-        print(
-            f"\tCorrelation best parent - best child: {pearsonr(min_parent_fitness, min_child_fitness)}")
-        print(
-            f"\tCorrelation best parent - mean child: {pearsonr(min_parent_fitness, mean_child_fitness)}")
-        print(
-            f"\tCorrelation worst parent - best child: {pearsonr(max_parent_fitness, min_child_fitness)}")
-
-        print("")
-        print(
-            f"\tCorrelation best parent - percentage of improvements: {pearsonr(min_parent_fitness, improvement_percentage)}")
-        print(
-            f"\tCorrelation second parent - percentage of improvements: {pearsonr(parent2_fitness, improvement_percentage)}")
-        print(
-            f"\tCorrelation parent spread - percentage of improvements: {pearsonr(parent_fitness_span, improvement_percentage)}")
-
-        plot_grid_as_scatter(parent1_fitness, parent2_fitness, min_child_fitness,
-                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_best.png")
-        plot_grid_as_scatter(parent1_fitness, parent2_fitness, mean_child_fitness,
-                             target_path=f"results/guided_walk_{experiment['config']['qubit_num']}q{experiment['config']['gate_count']}g_mean.png")
+            f"\t(best child fitness - parent1_fitness) = {round(res.intercept, 2)} + {round(res.slope, 2)} * (parent2_fitness - parent1_fitness) [r^2={round(res.rvalue ** 2, 2)}]")
