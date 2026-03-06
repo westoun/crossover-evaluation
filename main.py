@@ -21,59 +21,62 @@ if __name__ == "__main__":
     population_size = 1000
     max_generations = 1000
 
-    mutation_prob = 0.01
-    crossover_prob = 0.3
-    seed = 0
-
-    random.seed(seed)
-    np_random.seed(seed)
+    seed_num = 4
+    seed_offset = 1
 
     mutation = ReplaceGateMutation(
         qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
     )
 
-    # crossover = HeadlessChickenCrossover(
-    #     crossover=OnePointCrossover(),
-    #     qubit_num=qubit_num,
-    #     gate_count=gate_count,
-    #     gate_set=CLIFFORD_PLUS_T
-    # )
-    crossover = OnePointCrossover()
-
-    target_circuit: Circuit = random_circuit(
-        qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
-    )
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        target_unitary = get_unitary(target_circuit)
-
-    # fitness = MultiProcessFitness(
-    #     fitness=AbsoluteDistanceFitness(
-    #         target_unitary=target_unitary
-    #     )
-    # )
-    fitness = AbsoluteDistanceFitness(
-        target_unitary=target_unitary
-    )
-
-    selection = TournamentSelection(tournament_size=2)
-
-    params = ExperimentParams(
-        crossover=crossover,
-        mutation=mutation,
-        mutation_prob=mutation_prob,
-        crossover_prob=crossover_prob,
-        fitness=fitness,
-        selection=selection,
-        population_size=population_size,
-        max_generations=max_generations,
+    hc_crossover = HeadlessChickenCrossover(
+        crossover=OnePointCrossover(),
         qubit_num=qubit_num,
         gate_count=gate_count,
-        gate_set=CLIFFORD_PLUS_T,
-        seed=seed,
-        result_dir="results",
-        tag="2")
+        gate_set=CLIFFORD_PLUS_T
+    )
+    op_crossover = OnePointCrossover()
 
-    ga = GeneticAlgorithm(params)
-    ga.run()
+    for seed in range(seed_num):
+        seed = seed + seed_offset
+
+        random.seed(seed)
+        np_random.seed(seed)
+
+        for mutation_prob, crossover_prob, crossover in [
+            (0.05, 0.3, op_crossover),
+            (0.05, 0.3, hc_crossover),
+            (1.0, 0.0, op_crossover),
+        ]:
+
+            target_circuit: Circuit = random_circuit(
+                qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+            )
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                target_unitary = get_unitary(target_circuit)
+
+            fitness = AbsoluteDistanceFitness(
+                target_unitary=target_unitary
+            )
+
+            selection = TournamentSelection(tournament_size=2)
+
+            params = ExperimentParams(
+                crossover=crossover,
+                mutation=mutation,
+                mutation_prob=mutation_prob,
+                crossover_prob=crossover_prob,
+                fitness=fitness,
+                selection=selection,
+                population_size=population_size,
+                max_generations=max_generations,
+                qubit_num=qubit_num,
+                gate_count=gate_count,
+                gate_set=CLIFFORD_PLUS_T,
+                seed=seed,
+                result_dir="results",
+                tag=None)
+
+            ga = GeneticAlgorithm(params)
+            ga.run()
