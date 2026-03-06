@@ -27,7 +27,7 @@ class GeneticAlgorithm:
             for _ in range(self.params.population_size)
         ]
 
-        for generation in tqdm(range(1, self.params.max_generations + 1), leave=False):
+        for generation in tqdm(range(1, self.params.max_generations + 1), leave=False, desc="Generation"):
             offspring = [deepcopy(circuit) for circuit in population]
 
             if generation > 1:
