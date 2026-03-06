@@ -1,6 +1,7 @@
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
 import random
+from tqdm import tqdm
 import warnings
 
 from core.crossover import Crossover, OnePointCrossover, \
@@ -15,62 +16,67 @@ from core.utils.random_ import random_circuit
 
 
 if __name__ == "__main__":
-    seed_offset = 0
-    seed_num = 10
     gate_count = 10
     qubit_num = 3
     population_size = 1000
-    max_generations = 10_000
+    max_generations = 100
 
-    for seed_i in range(seed_num):
+    seed_num = 5
+    seed_offset = 0
+
+    mutation = ReplaceGateMutation(
+        qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
+    )
+
+    hc_crossover = HeadlessChickenCrossover(
+        crossover=OnePointCrossover(),
+        qubit_num=qubit_num,
+        gate_count=gate_count,
+        gate_set=CLIFFORD_PLUS_T
+    )
+    op_crossover = OnePointCrossover()
+
+    for seed_i in tqdm(range(seed_num), desc="Seeds"):
         seed = seed_offset + seed_i
 
-        for mutation_prob in [0.001, 0.005, 0.01, 0.05, 0.1]:
-            for crossover_prob in [0.0, 0.1, 0.3, 0.6, 1.0]:
+        for mutation_prob in tqdm([0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1], leave=False, desc="Mut Probs"):
+            for crossover_prob in tqdm([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], leave=False, desc="Cross Probs"):
 
-                random.seed(seed)
-                np_random.seed(seed)
+                for crossover in [
+                    op_crossover, hc_crossover
+                ]:
 
-                mutation = ReplaceGateMutation(
-                    qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
-                )
+                    random.seed(seed)
+                    np_random.seed(seed)
 
-                # crossover = HeadlessChickenCrossover(
-                #     crossover=OnePointCrossover(),
-                #     qubit_num=qubit_num,
-                #     gate_count=gate_count,
-                #     gate_set=CLIFFORD_PLUS_T
-                # )
-                crossover = OnePointCrossover()
+                    target_circuit: Circuit = random_circuit(
+                        qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+                    )
 
-                target_circuit: Circuit = random_circuit(
-                    qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
-                )
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        target_unitary = get_unitary(target_circuit)
 
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    target_unitary = get_unitary(target_circuit)
+                    fitness = AbsoluteDistanceFitness(
+                        target_unitary=target_unitary
+                    )
+                    selection = TournamentSelection(tournament_size=2)
 
-                fitness = AbsoluteDistanceFitness(
-                    target_unitary=target_unitary
-                )
-                selection = TournamentSelection(tournament_size=2)
+                    params = ExperimentParams(
+                        crossover=crossover,
+                        mutation=mutation,
+                        mutation_prob=mutation_prob,
+                        crossover_prob=crossover_prob,
+                        fitness=fitness,
+                        selection=selection,
+                        population_size=population_size,
+                        max_generations=max_generations,
+                        qubit_num=qubit_num,
+                        gate_count=gate_count,
+                        gate_set=CLIFFORD_PLUS_T,
+                        seed=seed,
+                        result_dir="results",
+                        tag="gs")
 
-                params = ExperimentParams(
-                    crossover=crossover,
-                    mutation=mutation,
-                    mutation_prob=mutation_prob,
-                    crossover_prob=crossover_prob,
-                    fitness=fitness,
-                    selection=selection,
-                    population_size=population_size,
-                    max_generations=max_generations,
-                    qubit_num=qubit_num,
-                    gate_count=gate_count,
-                    gate_set=CLIFFORD_PLUS_T,
-                    seed=seed,
-                    result_dir="results",
-                    tag=None)
-
-                ga = GeneticAlgorithm(params)
-                ga.run()
+                    ga = GeneticAlgorithm(params)
+                    ga.run()
