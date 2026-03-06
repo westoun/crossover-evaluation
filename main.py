@@ -77,7 +77,7 @@ if __name__ == "__main__":
                 gate_set=CLIFFORD_PLUS_T,
                 seed=seed,
                 result_dir="results",
-                tag=None)
+                tag="experiment")
 
             ga = GeneticAlgorithm(params)
             ga.run()

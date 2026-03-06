@@ -17,11 +17,12 @@ def get_timestamp() -> str:
 
 
 def log_params(params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path = f"{params.result_dir}/"
+    if params.tag is not None:
+        target_path += f"{params.tag}_"
+    target_path += f"{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
     target_path += f"_{params.crossover.name.lower()}"
     target_path += f"_{params.seed}s"
-    if params.tag is not None:
-        target_path += f"_{params.tag}"
     target_path += f"_config.json"
 
     config = {
@@ -38,17 +39,19 @@ def log_params(params: ExperimentParams) -> None:
         "crossover": params.crossover.name,
         "fitness": params.fitness.name,
         "selection": params.selection.name,
+        "tag": params.tag
     }
 
     save_to_json(config, target_path)
 
 
 def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitness_stdev: float, params: ExperimentParams) -> None:
-    target_path = f"{params.result_dir}/{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
+    target_path = f"{params.result_dir}/"
+    if params.tag is not None:
+        target_path += f"{params.tag}_"
+    target_path += f"{params.qubit_num}q{params.gate_count}g{params.mutation_prob}mp{params.crossover_prob}cp"
     target_path += f"_{params.crossover.name.lower()}"
     target_path += f"_{params.seed}s"
-    if params.tag is not None:
-        target_path += f"_{params.tag}"
     target_path += f"_fitness.csv"
 
     add_header = not os.path.exists(target_path)
