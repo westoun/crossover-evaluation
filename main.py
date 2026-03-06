@@ -1,6 +1,7 @@
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
 import random
+from tqdm import tqdm
 import warnings
 
 from core.crossover import Crossover, OnePointCrossover, \
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     max_generations = 1000
 
     seed_num = 4
-    seed_offset = 1
+    seed_offset = 2
 
     mutation = ReplaceGateMutation(
         qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
@@ -36,17 +37,17 @@ if __name__ == "__main__":
     )
     op_crossover = OnePointCrossover()
 
-    for seed in range(seed_num):
+    for seed in tqdm(range(seed_num), total=seed_num):
         seed = seed + seed_offset
 
         random.seed(seed)
         np_random.seed(seed)
 
-        for mutation_prob, crossover_prob, crossover in [
+        for mutation_prob, crossover_prob, crossover in tqdm([
             (0.05, 0.3, op_crossover),
             (0.05, 0.3, hc_crossover),
             (1.0, 0.0, op_crossover),
-        ]:
+        ], leave=False):
 
             target_circuit: Circuit = random_circuit(
                 qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T

@@ -2,6 +2,7 @@
 from copy import deepcopy
 from statistics import mean, stdev
 import random
+from tqdm import tqdm
 
 from .utils.random_ import random_circuit
 from .params import ExperimentParams
@@ -26,7 +27,7 @@ class GeneticAlgorithm:
             for _ in range(self.params.population_size)
         ]
 
-        for generation in range(1, self.params.max_generations + 1):
+        for generation in tqdm(range(1, self.params.max_generations + 1), leave=False):
             offspring = [deepcopy(circuit) for circuit in population]
 
             if generation > 1:
