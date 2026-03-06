@@ -85,6 +85,8 @@ if __name__ == "__main__":
         parent1_fitness = []
         parent2_fitness = []
         mean_parent_fitness = []
+        best_parent_fitness = []
+
         parent2_change = []
 
         mean_child_fitness = []
@@ -94,6 +96,8 @@ if __name__ == "__main__":
         best_child_change = []
 
         improvement_percentage = []
+
+        best_child_trumps_best_parent = []
 
         for pairing in experiment["results"]:
             parent1_fitness.append(-1 * pairing["parent_fitness"][0])
@@ -105,6 +109,9 @@ if __name__ == "__main__":
             )
 
             mean_parent_fitness.append(-1 * mean(pairing["parent_fitness"]))
+            best_parent_fitness.append(
+                -1 * min(pairing["parent_fitness"])
+            )
 
             child_fitness_scores = flatten_child_fitness_scores(pairing)
 
@@ -128,6 +135,11 @@ if __name__ == "__main__":
                 ]) / len(child_fitness_scores)
             )
 
+            if min(child_fitness_scores) < min(pairing["parent_fitness"]):
+                best_child_trumps_best_parent.append(1)
+            else: 
+                best_child_trumps_best_parent.append(0)
+
         x = [fitness / (2**(1.5 * qubit_num + 1))
              for fitness in parent2_change]
         y = [fitness / (2**(1.5 * qubit_num + 1))
@@ -142,3 +154,8 @@ if __name__ == "__main__":
         res = linregress(x, y)
         print(
             f"\t(best child fitness - parent1_fitness) = {round(res.intercept, 2)} + {round(res.slope, 2)} * (parent2_fitness - parent1_fitness) [r^2={round(res.rvalue ** 2, 2)}]")
+
+        print(
+            f"\tCorrelation best parent - prob. of better child: {round(pearsonr(best_parent_fitness, best_child_trumps_best_parent).statistic, 2)}")
+        # print(
+        #     f"\tCorrelation best parent - best child: {pearsonr(best_parent_fitness, best_child_fitness)}")
