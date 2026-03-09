@@ -64,7 +64,6 @@ class GeneticAlgorithm:
                 best_fitness=best_fitness,
                 mean_fitness=mean_fitness,
                 fitness_stdev=fitness_stdev,
-                top_20_circuits=sorted_circuits[:20],
                 params=self.params
             )
 

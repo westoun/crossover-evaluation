@@ -2,8 +2,6 @@
 from datetime import datetime
 import json
 import os
-from quasim import Circuit
-from typing import List
 
 from core.params import ExperimentParams
 from core.gate_sets import gateset_to_string
@@ -47,7 +45,7 @@ def log_params(params: ExperimentParams) -> None:
     save_to_json(config, target_path)
 
 
-def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitness_stdev: float, top_20_circuits: List[Circuit], params: ExperimentParams) -> None:
+def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitness_stdev: float, params: ExperimentParams) -> None:
     target_path = f"{params.result_dir}/"
     if params.tag is not None:
         target_path += f"{params.tag}_"
@@ -61,9 +59,7 @@ def log_fitness(generation: int, best_fitness: float, mean_fitness: float, fitne
     with open(target_path, "a") as target_file:
         if add_header:
             target_file.write(
-                f"generation; best fitness; mean fitness; fitness stdev; top 20 circuits;\n")
-
-        top_20_circuits = [circuit.__repr__() for circuit in top_20_circuits]
+                f"generation; best fitness; mean fitness; fitness stdev\n")
 
         target_file.write(
-            f"{generation}; {best_fitness}; {mean_fitness}; {fitness_stdev}; {top_20_circuits}\n")
+            f"{generation}; {best_fitness}; {mean_fitness}; {fitness_stdev}\n")
