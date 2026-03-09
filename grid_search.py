@@ -11,28 +11,29 @@ from core.fitness import Fitness, AbsoluteDistanceFitness
 from core.selection import Selection, TournamentSelection
 from core.ga import GeneticAlgorithm
 from core.params import ExperimentParams
-from core.gate_sets import CLIFFORD_PLUS_T
+from core.gate_sets import CLIFFORD_PLUS_T, CLIFFORD_PLUS_T_PLUS_I
 from core.utils.random_ import random_circuit
 
 
 if __name__ == "__main__":
-    gate_count = 10
-    qubit_num = 3
+    gate_count = 20
+    qubit_num = 4
     population_size = 1000
     max_generations = 100
+    gate_set = CLIFFORD_PLUS_T_PLUS_I
 
-    seed_num = 5
+    seed_num = 2
     seed_offset = 0
 
     mutation = ReplaceGateMutation(
-        qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
+        qubit_num=qubit_num, gate_set=gate_set
     )
 
     hc_crossover = HeadlessChickenCrossover(
         crossover=OnePointCrossover(),
         qubit_num=qubit_num,
         gate_count=gate_count,
-        gate_set=CLIFFORD_PLUS_T
+        gate_set=gate_set
     )
     op_crossover = OnePointCrossover()
 
@@ -43,14 +44,14 @@ if __name__ == "__main__":
             for crossover_prob in tqdm([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], leave=False, desc="Cross Probs"):
 
                 for crossover in [
-                    op_crossover, hc_crossover
+                    op_crossover # , hc_crossover
                 ]:
 
                     random.seed(seed)
                     np_random.seed(seed)
 
                     target_circuit: Circuit = random_circuit(
-                        qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+                        qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
                     )
 
                     with warnings.catch_warnings():
@@ -73,10 +74,10 @@ if __name__ == "__main__":
                         max_generations=max_generations,
                         qubit_num=qubit_num,
                         gate_count=gate_count,
-                        gate_set=CLIFFORD_PLUS_T,
+                        gate_set=gate_set,
                         seed=seed,
                         result_dir="results",
-                        tag="gs")
+                        tag="grid_search")
 
                     ga = GeneticAlgorithm(params)
                     ga.run()
