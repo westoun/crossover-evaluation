@@ -1,4 +1,5 @@
 from numpy import random as np_random
+import numpy as np
 from quasim import Circuit, get_unitary
 import random
 from tqdm import tqdm
@@ -12,28 +13,44 @@ from core.fitness import Fitness, AbsoluteDistanceFitness, \
 from core.selection import Selection, TournamentSelection
 from core.ga import GeneticAlgorithm
 from core.params import ExperimentParams
-from core.gate_sets import CLIFFORD_PLUS_T
+from core.gate_sets import CLIFFORD_PLUS_T, CLIFFORD_PLUS_T_PLUS_I
 from core.utils.random_ import random_circuit
 
 
-if __name__ == "__main__":
-    gate_count = 10
-    qubit_num = 3
-    population_size = 1000
-    max_generations = 1000
+def create_qft_unitary(qubit_num: int) -> np.ndarray:
+    dim = 2 ** qubit_num
 
-    seed_num = 4
-    seed_offset = 2
+    dft_matrix = np.zeros((dim, dim), dtype=np.complex128)
+
+    w = np.pow(np.e, 2 * np.pi * 1j / dim)
+
+    for i in range(dim):
+        for j in range(dim):
+            dft_matrix[i, j] = np.pow(w, i * j)
+
+    unitary = 1 / np.pow(dim, 0.5) * dft_matrix
+    return unitary
+
+
+if __name__ == "__main__":
+    gate_count = 20
+    qubit_num = 4
+    population_size = 1_000
+    max_generations = 10_000
+    gate_set = CLIFFORD_PLUS_T_PLUS_I
+
+    seed_num = 1
+    seed_offset = 0
 
     mutation = ReplaceGateMutation(
-        qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
+        qubit_num=qubit_num, gate_set=gate_set
     )
 
     hc_crossover = HeadlessChickenCrossover(
         crossover=OnePointCrossover(),
         qubit_num=qubit_num,
         gate_count=gate_count,
-        gate_set=CLIFFORD_PLUS_T
+        gate_set=gate_set
     )
     op_crossover = OnePointCrossover()
 
@@ -49,13 +66,15 @@ if __name__ == "__main__":
             (1.0, 0.0, op_crossover),
         ], leave=False):
 
-            target_circuit: Circuit = random_circuit(
-                qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
-            )
+            # target_circuit: Circuit = random_circuit(
+            #     qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+            # )
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                target_unitary = get_unitary(target_circuit)
+            # with warnings.catch_warnings():
+            #     warnings.simplefilter("ignore")
+            #     target_unitary = get_unitary(target_circuit)
+
+            target_unitary = create_qft_unitary(qubit_num)
 
             fitness = AbsoluteDistanceFitness(
                 target_unitary=target_unitary
@@ -74,7 +93,7 @@ if __name__ == "__main__":
                 max_generations=max_generations,
                 qubit_num=qubit_num,
                 gate_count=gate_count,
-                gate_set=CLIFFORD_PLUS_T,
+                gate_set=gate_set,
                 seed=seed,
                 result_dir="results",
                 tag="experiment")
