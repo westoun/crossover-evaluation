@@ -1,3 +1,4 @@
+import click
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
 import random
@@ -15,69 +16,104 @@ from core.gate_sets import CLIFFORD_PLUS_T, CLIFFORD_PLUS_T_PLUS_I
 from core.utils.random_ import random_circuit
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option(
+    "--crossover",
+    "-c",
+    "crossover_name",
+    type=click.STRING,
+    default="one-point",
+    help="The name of the crossover to be used. Must be either 'one-point' or 'pseudo'.",
+)
+@click.option(
+    "--mutation_prob",
+    "-mp",
+    "mutation_prob",
+    type=click.FLOAT,
+    help="The probability of mutating a single gate.",
+)
+@click.option(
+    "--crossover_prob",
+    "-cp",
+    "crossover_prob",
+    type=click.FLOAT,
+    help="The probability of performing crossover between two individuals.",
+)
+@click.option(
+    "--seed",
+    "-s",
+    "seed",
+    type=click.INT,
+    default=0,
+    help="The seed value to use during current experiment run.",
+)
+@click.option(
+    "--target",
+    "-target",
+    "target_dir",
+    type=click.STRING,
+    default="results",
+    help="The seed value to use during current experiment run.",
+)
+def run_grid_experiment(crossover_name: str, mutation_prob: float, crossover_prob: float, seed: int, target_dir: str):
     gate_count = 20
     qubit_num = 4
-    population_size = 1000
-    max_generations = 100
+    population_size = 1_000
+    max_generations = 1_000
     gate_set = CLIFFORD_PLUS_T_PLUS_I
 
-    seed_num = 2
-    seed_offset = 0
+    random.seed(seed)
+    np_random.seed(seed)
 
     mutation = ReplaceGateMutation(
         qubit_num=qubit_num, gate_set=gate_set
     )
 
-    hc_crossover = HeadlessChickenCrossover(
-        crossover=OnePointCrossover(),
+    if crossover_name == "one-point":
+        crossover = OnePointCrossover()
+    elif crossover_name == "pseudo":
+        crossover = HeadlessChickenCrossover(
+            crossover=OnePointCrossover(),
+            qubit_num=qubit_num,
+            gate_count=gate_count,
+            gate_set=gate_set
+        )
+    else:
+        raise NotImplementedError(
+            f"No implementation found for crossover '{crossover_name}'.")
+
+    target_circuit: Circuit = random_circuit(
+        qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        target_unitary = get_unitary(target_circuit)
+
+    fitness = AbsoluteDistanceFitness(
+        target_unitary=target_unitary
+    )
+    selection = TournamentSelection(tournament_size=2)
+
+    params = ExperimentParams(
+        crossover=crossover,
+        mutation=mutation,
+        mutation_prob=mutation_prob,
+        crossover_prob=crossover_prob,
+        fitness=fitness,
+        selection=selection,
+        population_size=population_size,
+        max_generations=max_generations,
         qubit_num=qubit_num,
         gate_count=gate_count,
-        gate_set=gate_set
-    )
-    op_crossover = OnePointCrossover()
+        gate_set=gate_set,
+        seed=seed,
+        result_dir=target_dir,
+        tag="grid_search")
 
-    for seed_i in tqdm(range(seed_num), desc="Seeds"):
-        seed = seed_offset + seed_i
+    ga = GeneticAlgorithm(params)
+    ga.run()
 
-        for mutation_prob in tqdm([0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1], leave=False, desc="Mut Probs"):
-            for crossover_prob in tqdm([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], leave=False, desc="Cross Probs"):
 
-                for crossover in [
-                    op_crossover # , hc_crossover
-                ]:
-
-                    random.seed(seed)
-                    np_random.seed(seed)
-
-                    target_circuit: Circuit = random_circuit(
-                        qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
-                    )
-
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        target_unitary = get_unitary(target_circuit)
-
-                    fitness = AbsoluteDistanceFitness(
-                        target_unitary=target_unitary
-                    )
-                    selection = TournamentSelection(tournament_size=2)
-
-                    params = ExperimentParams(
-                        crossover=crossover,
-                        mutation=mutation,
-                        mutation_prob=mutation_prob,
-                        crossover_prob=crossover_prob,
-                        fitness=fitness,
-                        selection=selection,
-                        population_size=population_size,
-                        max_generations=max_generations,
-                        qubit_num=qubit_num,
-                        gate_count=gate_count,
-                        gate_set=gate_set,
-                        seed=seed,
-                        result_dir="results",
-                        tag="grid_search")
-
-                    ga = GeneticAlgorithm(params)
-                    ga.run()
+if __name__ == "__main__":
+    run_grid_experiment()
