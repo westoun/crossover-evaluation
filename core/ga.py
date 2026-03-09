@@ -27,6 +27,7 @@ class GeneticAlgorithm:
             for _ in range(self.params.population_size)
         ]
 
+        elite = []
         for generation in tqdm(range(1, self.params.max_generations + 1), leave=False, desc="Generation"):
             offspring = [deepcopy(circuit) for circuit in population]
 
@@ -35,7 +36,7 @@ class GeneticAlgorithm:
                 # generations.
                 random.shuffle(offspring)
 
-                for i in range(0, len(offspring), 2):
+                for i in range(0, len(offspring) - 1, 2):
                     if random.random() < self.params.crossover_prob:
                         offspring[i], offspring[i +
                                                 1] = self.params.crossover.cross(offspring[i], offspring[i + 1])
@@ -46,7 +47,14 @@ class GeneticAlgorithm:
                             offspring[i].gates[j] = self.params.mutation.mutate(
                                 gate)
 
+            offspring.extend(elite)
             fitness_scores = self.params.fitness.score(offspring)
+
+            circuit_fitness = list(zip(offspring, fitness_scores))
+            circuit_fitness.sort(key=lambda item: item[1])
+
+            sorted_circuits = [circuit for (circuit, fitness) in circuit_fitness]
+            elite = [sorted_circuits[0]]
 
             best_fitness = min(fitness_scores)
             mean_fitness = mean(fitness_scores)
