@@ -7,7 +7,7 @@ services:
     command: >
       bash -c "
       echo start
-      && python3 grid_search.py
+      && python3 main.py -mp 0.05 -cp 0.3 -s 0 -t test  
       "
     volumes:
       - ./results:/app/results

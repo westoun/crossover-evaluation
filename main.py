@@ -3,6 +3,7 @@ import numpy as np
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
 import random
+import warnings
 
 from core.utils.random_ import random_circuit
 from core.gate_sets import CLIFFORD_PLUS_T, CLIFFORD_PLUS_T_PLUS_I
@@ -55,6 +56,38 @@ def create_qft_unitary(qubit_num: int) -> np.ndarray:
     help="The probability of performing crossover between two individuals.",
 )
 @click.option(
+    "--gate_count",
+    "-gc",
+    "gate_count",
+    type=click.INT,
+    default=20,
+    help="The number of gates per circuit.",
+)
+@click.option(
+    "--qubit_num",
+    "-qn",
+    "qubit_num",
+    type=click.INT,
+    default=4,
+    help="The number of qubits per circuit.",
+)
+@click.option(
+    "--population",
+    "-p",
+    "population_size",
+    type=click.INT,
+    default=1_000,
+    help="The number of circuits in the population.",
+)
+@click.option(
+    "--generations",
+    "-g",
+    "max_generations",
+    type=click.INT,
+    default=1_000_000,
+    help="The number of generations for which the ga is to be run.",
+)
+@click.option(
     "--seed",
     "-s",
     "seed",
@@ -63,18 +96,32 @@ def create_qft_unitary(qubit_num: int) -> np.ndarray:
     help="The seed value to use during current experiment run.",
 )
 @click.option(
-    "--target",
-    "-target",
-    "target_dir",
+    "--result-dir",
+    "-rd",
+    "result_dir",
     type=click.STRING,
     default="results",
-    help="The seed value to use during current experiment run.",
+    help="The dir path where result files are to be stored.",
 )
-def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: float, seed: int, target_dir: str):
-    gate_count = 20
-    qubit_num = 4
-    population_size = 1_000
-    max_generations = 1_000_000
+@click.option(
+    "--target",
+    "-t",
+    "target",
+    type=click.STRING,
+    default="qft",
+    help="The synthesis target. Must be either 'random' or 'qft'.",
+)
+@click.option(
+    "--tag",
+    "-tag",
+    "tag",
+    type=click.STRING,
+    default=None,
+    help="An optional tag to later identify experiments by.",
+)
+def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: float, gate_count: int,
+                   qubit_num: int, population_size: int, max_generations: int, seed: int, result_dir: str,
+                   target: str, tag: str):
     gate_set = CLIFFORD_PLUS_T_PLUS_I
 
     random.seed(seed)
@@ -97,7 +144,19 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
         raise NotImplementedError(
             f"No implementation found for crossover '{crossover_name}'.")
 
-    target_unitary = create_qft_unitary(qubit_num)
+    if target == "qft":
+        target_unitary = create_qft_unitary(qubit_num)
+    elif target == "random":
+        target_circuit: Circuit = random_circuit(
+            qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
+        )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            target_unitary = get_unitary(target_circuit)
+    else:
+        raise NotImplementedError(
+            f"No implementation found for target '{target}'.")
 
     fitness = AbsoluteDistanceFitness(
         target_unitary=target_unitary
@@ -118,8 +177,8 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
         gate_count=gate_count,
         gate_set=gate_set,
         seed=seed,
-        result_dir=target_dir,
-        tag="experiment")
+        result_dir=result_dir,
+        tag=tag)
 
     ga = GeneticAlgorithm(params)
     ga.run()
