@@ -1,0 +1,4 @@
+sbatch --job-name=exp_0.05mp0.3cp_one-point_0s --export=crossover="one-point",mutation_prob=0.05,crossover_prob=0.3,seed=0,result_dir=/home/ws/ws16/CEIQ/results,generations=1000000,target=qft,tag=experiment run_experiment.sh
+sbatch --job-name=exp_0.05mp0.3cp_pseudo_0s --export=crossover="pseudo",mutation_prob=0.05,crossover_prob=0.3,seed=0,result_dir=/home/ws/ws16/CEIQ/results,generations=1000000,target=qft,tag=experiment run_experiment.sh
+sbatch --job-name=exp_0.05mp0.3cp_one-point_1s --export=crossover="one-point",mutation_prob=0.05,crossover_prob=0.3,seed=1,result_dir=/home/ws/ws16/CEIQ/results,generations=1000000,target=qft,tag=experiment run_experiment.sh
+sbatch --job-name=exp_0.05mp0.3cp_pseudo_1s --export=crossover="pseudo",mutation_prob=0.05,crossover_prob=0.3,seed=1,result_dir=/home/ws/ws16/CEIQ/results,generations=1000000,target=qft,tag=experiment run_experiment.sh
