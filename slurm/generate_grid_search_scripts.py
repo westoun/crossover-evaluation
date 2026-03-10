@@ -1,5 +1,5 @@
-seed_num = 13
-seed_offset = 2
+seed_num = 30
+seed_offset = 0
 
 crossover="one-point"
 
