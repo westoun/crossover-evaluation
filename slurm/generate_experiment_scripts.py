@@ -1,8 +1,10 @@
-seed_num = 2
+seed_num = 15
 seed_offset = 0
 
-mutation_prob = 0.05
-crossover_prob = 0.3
+mutation_prob = 0.04
+crossover_prob = 0.7
+
+generations = 100_000
 
 with open("run_experiments.sh", "w") as target_file:
 
@@ -13,8 +15,15 @@ with open("run_experiments.sh", "w") as target_file:
 
             experiment_cmd = f"sbatch --job-name=exp_{mutation_prob}mp{crossover_prob}cp_{crossover}_{seed}s"
             experiment_cmd += (f" --export=crossover=\"{crossover}\",mutation_prob={mutation_prob},crossover_prob={crossover_prob},"
-                f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations=1000000,target=qft,tag=experiment")
+                               f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations={generations},target=qft,tag=experiment")
             experiment_cmd += f" run_experiment.sh\n"
-            
 
             target_file.write(experiment_cmd)
+
+        # Random search
+        experiment_cmd = f"sbatch --job-name=exp_1.0mp0.0cp_one-point_{seed}s"
+        experiment_cmd += (f" --export=crossover=\"one-point\",mutation_prob=1.0,crossover_prob=0.0,"
+                            f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations={generations},target=qft,tag=experiment")
+        experiment_cmd += f" run_experiment.sh\n"
+
+        target_file.write(experiment_cmd)
