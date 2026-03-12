@@ -19,49 +19,6 @@ from core.gate_sets import CLIFFORD_PLUS_T
 from core.mutation import ReplaceGateMutation
 
 
-class AppendGateMutation:
-    name: str = "Append Gate Mutation"
-
-    qubit_num: int
-    gate_set: List[IGate]
-
-    def __init__(self, qubit_num: int, gate_set: List[IGate]):
-        self.qubit_num = qubit_num
-        self.gate_set = gate_set
-
-    def mutate(self, circuit: Circuit) -> Circuit:
-        circuit = deepcopy(circuit)
-        new_gate = random_gate(
-            self.qubit_num, self.gate_set)
-
-        circuit.gates.append(new_gate)
-        return circuit
-
-
-class InsertSomewhereMutation:
-    name: str = "Insert Somewhere Mutation"
-
-    qubit_num: int
-    gate_set: List[IGate]
-
-    def __init__(self, qubit_num: int, gate_set: List[IGate]):
-        self.qubit_num = qubit_num
-        self.gate_set = gate_set
-
-    def mutate(self, circuit: Circuit) -> Circuit:
-        circuit = deepcopy(circuit)
-
-        new_gate = random_gate(
-            self.qubit_num, self.gate_set)
-
-        target_i = random.randint(0, len(circuit.gates))
-        circuit.gates.insert(
-            target_i, new_gate
-        )
-
-        return circuit
-
-
 @dataclass
 class MutationResult():
     gate_count: int
