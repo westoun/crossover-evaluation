@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
+import math
 import matplotlib.pyplot as plt
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
@@ -76,7 +77,7 @@ def get_gate_type(gate: IGate) -> str:
 
 def get_differing_gate(old_circuit: Circuit, new_circuit: Circuit) -> IGate:
 
-    assert abs(len(old_circuit.gates) == len(new_circuit.gates))
+    assert len(old_circuit.gates) == len(new_circuit.gates)
 
     for old_gate, new_gate in zip(old_circuit.gates, new_circuit.gates):
         if old_gate.__repr__() != new_gate.__repr__():
