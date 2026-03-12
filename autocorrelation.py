@@ -40,8 +40,6 @@ def get_differing_gate(old_circuit: Circuit, new_circuit: Circuit) -> IGate:
         if old_gate.__repr__() != new_gate.__repr__():
             return new_gate
 
-    raise ValueError()
-
 
 def filter_results(data: List[MutationResult], criterion: str, value) -> List[MutationResult]:
     if criterion == "qubit_num":
@@ -63,12 +61,17 @@ def filter_results(data: List[MutationResult], criterion: str, value) -> List[Mu
         raise NotImplementedError()
 
 
-if __name__ == "__main__":
+def compute_correlation_length(autocorrelation: float) -> float:
+    correlation_length = -1 / math.log(autocorrelation)
+    return correlation_length
+
+
+if __name__ == "__main__2":
 
     seed_num = 100
-    population_size = 100
+    population_size = 1000
 
-    qubit_nums = [3, 4, 5, 6, 7]
+    qubit_nums = [2, 3, 4, 5, 6]
     gate_counts = [10, 15, 20, 25, 30]
 
     data: List[MutationResult] = []
@@ -78,7 +81,7 @@ if __name__ == "__main__":
 
         for gate_count in tqdm(gate_counts, desc="Gate Counts", leave=False):
 
-            for seed in tqdm(range(seed_num), total=seed_num, leave=False):
+            for seed in tqdm(range(seed_num), total=seed_num, desc="Seed", leave=False):
 
                 random.seed(seed)
                 np_random.seed(seed)
@@ -95,35 +98,30 @@ if __name__ == "__main__":
                     target_unitary=target_unitary
                 )
 
-                old_population = [
+                population = [
                     random_circuit(
                         qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
                     ) for _ in range(population_size)
                 ]
-                old_scores = fitness.score(old_population)
+                old_scores = fitness.score(population)
 
-                new_population = []
-                for circuit in old_population:
-                    new_circuit = deepcopy(circuit)
-
+                for circuit, old_score in zip(
+                    population, old_scores
+                ):
                     target_idx = random.randint(0, len(circuit.gates) - 1)
 
-                    new_circuit.gates[target_idx] = mutation.mutate(
-                        new_circuit.gates[target_idx])
+                    circuit.gates[target_idx] = mutation.mutate(
+                        circuit.gates[target_idx])
 
-                new_scores = fitness.score(new_population)
+                    new_score = fitness.score([circuit])[0]
 
-                for old_circuit, old_score, new_circuit, new_score in zip(
-                    old_population, old_scores, new_population, new_scores
-                ):
-                    differing_gate = get_differing_gate(
-                        old_circuit, new_circuit)
                     data.append(
                         MutationResult(
                             gate_count=gate_count,
                             qubit_num=qubit_num,
                             fitness_before=old_score,
-                            fitness_after=new_score
+                            fitness_after=new_score,
+                            gate_type=get_gate_type(circuit.gates[target_idx])
                         )
                     )
 
@@ -225,14 +223,14 @@ if __name__ == "__main__":
                     before_values, after_values).correlation
                 autocorrelations.append(autocorrelation)
 
-            ax.plot(gate_counts, autocorrelations,
+            ax.plot(qubit_nums, autocorrelations,
                     label=gate_type)
 
         # autocorrelation across gate types
         autocorrelations = []
         for qubit_num in qubit_nums:
             data_by_qubit = filter_results(
-                data_by_gate_count, criterion="gate_count", value=gate_count
+                data_by_gate_count, criterion="qubit_num", value=qubit_num
             )
 
             before_values = [datum.fitness_before for datum in data_by_qubit]
