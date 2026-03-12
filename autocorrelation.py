@@ -15,6 +15,7 @@ from core.utils.random_ import random_circuit, random_gate
 from core.utils.logging import save_to_json, get_timestamp
 from core.fitness import Fitness, AbsoluteDistanceFitness
 from core.gate_sets import CLIFFORD_PLUS_T
+from core.mutation import ReplaceGateMutation
 
 
 class AppendGateMutation:
@@ -62,164 +63,238 @@ class InsertSomewhereMutation:
 
 @dataclass
 class MutationResult():
+    gate_count: int
+    qubit_num: int
     fitness_before: float
     fitness_after: float
     gate_type: str
-    gates_before: int
 
 
 def get_gate_type(gate: IGate) -> str:
     return str(type(gate)).split(".")[-1].split("'")[0]
 
 
-def get_differing_gate(circuit1: Circuit, circuit2: Circuit) -> IGate:
+def get_differing_gate(old_circuit: Circuit, new_circuit: Circuit) -> IGate:
 
-    assert abs(len(circuit1.gates) - len(circuit2.gates)) == 1
+    assert abs(len(old_circuit.gates) == len(new_circuit.gates))
 
-    if len(circuit1.gates) > len(circuit2.gates):
-        longer_circuit = circuit1
-        shorter_circuit = circuit2
+    for old_gate, new_gate in zip(old_circuit.gates, new_circuit.gates):
+        if old_gate.__repr__() != new_gate.__repr__():
+            return new_gate
+
+    raise ValueError()
+
+
+def filter_results(data: List[MutationResult], criterion: str, value) -> List[MutationResult]:
+    if criterion == "qubit_num":
+        filtered_data = [
+            datum for datum in data if datum.qubit_num == value
+        ]
+        return filtered_data
+    elif criterion == "gate_count":
+        filtered_data = [
+            datum for datum in data if datum.gate_count == value
+        ]
+        return filtered_data
+    elif criterion == "gate_type":
+        filtered_data = [
+            datum for datum in data if datum.gate_type == value
+        ]
+        return filtered_data
     else:
-        longer_circuit = circuit2
-        shorter_circuit = circuit1
-
-    for i in range(len(shorter_circuit.gates)):
-        if shorter_circuit.gates[i].__repr__() != longer_circuit.gates[i].__repr__():
-            return longer_circuit.gates[i]
-
-    return longer_circuit.gates[-1]
+        raise NotImplementedError()
 
 
 if __name__ == "__main__":
 
     seed_num = 100
-    population_size = 200
-    min_gates = 1
-    max_gates = 20
-    qubit_num = 4
+    population_size = 100
 
-    mutation = AppendGateMutation(qubit_num, gate_set=CLIFFORD_PLUS_T)
-    # mutation = InsertSomewhereMutation(qubit_num, gate_set=CLIFFORD_PLUS_T)
+    qubit_nums = [3, 4, 5, 6, 7]
+    gate_counts = [10, 15, 20, 25, 30]
 
     data: List[MutationResult] = []
-    for seed in tqdm(range(seed_num), total=seed_num):
 
-        random.seed(seed)
-        np_random.seed(seed)
+    for qubit_num in tqdm(qubit_nums, desc="Qubits"):
+        mutation = ReplaceGateMutation(qubit_num, gate_set=CLIFFORD_PLUS_T)
 
-        target_circuit: Circuit = random_circuit(
-            qubit_num=qubit_num, gate_count=random.randint(min_gates, max_gates), gate_set=CLIFFORD_PLUS_T
-        )
+        for gate_count in tqdm(gate_counts, desc="Gate Counts", leave=False):
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            target_unitary = get_unitary(target_circuit)
+            for seed in tqdm(range(seed_num), total=seed_num, leave=False):
 
-        fitness = AbsoluteDistanceFitness(
-            target_unitary=target_unitary
-        )
+                random.seed(seed)
+                np_random.seed(seed)
 
-        old_population = [
-            random_circuit(
-                qubit_num=qubit_num, gate_count=min_gates, gate_set=CLIFFORD_PLUS_T
-            ) for _ in range(population_size)
-        ]
-        old_scores = fitness.score(old_population)
-
-        for gates_before in range(min_gates, max_gates):
-
-            new_population = [
-                mutation.mutate(circuit) for circuit in old_population
-            ]
-            new_scores = fitness.score(new_population)
-
-            for circuit, old_circuit, score, old_score in zip(new_population, old_population, new_scores, old_scores):
-
-                differing_gate = circuit.gates[-1]
-                # differing_gate = get_differing_gate(circuit, old_circuit)
-
-                data.append(
-                    MutationResult(
-                        fitness_before=old_score, fitness_after=score, gate_type=get_gate_type(differing_gate), gates_before=gates_before
-                    )
+                target_circuit: Circuit = random_circuit(
+                    qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
                 )
 
-            old_population = new_population
-            old_scores = new_scores
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    target_unitary = get_unitary(target_circuit)
 
-    # show gates before on x axis, autocorrelation for current gate count on y, all gate types
+                fitness = AbsoluteDistanceFitness(
+                    target_unitary=target_unitary
+                )
+
+                old_population = [
+                    random_circuit(
+                        qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+                    ) for _ in range(population_size)
+                ]
+                old_scores = fitness.score(old_population)
+
+                new_population = []
+                for circuit in old_population:
+                    new_circuit = deepcopy(circuit)
+
+                    target_idx = random.randint(0, len(circuit.gates) - 1)
+
+                    new_circuit.gates[target_idx] = mutation.mutate(
+                        new_circuit.gates[target_idx])
+
+                new_scores = fitness.score(new_population)
+
+                for old_circuit, old_score, new_circuit, new_score in zip(
+                    old_population, old_scores, new_population, new_scores
+                ):
+                    differing_gate = get_differing_gate(
+                        old_circuit, new_circuit)
+                    data.append(
+                        MutationResult(
+                            gate_count=gate_count,
+                            qubit_num=qubit_num,
+                            fitness_before=old_score,
+                            fitness_after=new_score
+                        )
+                    )
 
     gate_types = list(set([
         datum.gate_type for datum in data
     ]))
     gate_types = sorted(gate_types)
 
-    ax = plt.subplot()
+    # fixed qubit, varying gate count
+    for qubit_num in qubit_nums:
 
-    for gate_type in gate_types:
-        gate_type_data = [
-            datum for datum in data if datum.gate_type == gate_type
-        ]
+        ax = plt.subplot()
 
-        circuit_lengths = []
+        data_by_qubit = filter_results(
+            data, criterion="qubit_num", value=qubit_num
+        )
+
+        # autocorrelation per gate type
+        for gate_type in gate_types:
+            data_by_gate_type = filter_results(
+                data_by_qubit, criterion="gate_type", value=gate_type
+            )
+
+            autocorrelations = []
+            for gate_count in gate_counts:
+                data_by_gate_count = filter_results(
+                    data_by_gate_type, criterion="gate_count", value=gate_count
+                )
+
+                before_values = [
+                    datum.fitness_before for datum in data_by_gate_count]
+                after_values = [
+                    datum.fitness_after for datum in data_by_gate_count]
+
+                autocorrelation = stats.pearsonr(
+                    before_values, after_values).correlation
+                autocorrelations.append(autocorrelation)
+
+            ax.plot(gate_counts, autocorrelations,
+                    label=gate_type)
+
+        # autocorrelation across gate types
         autocorrelations = []
+        for gate_count in gate_counts:
+            data_by_gate_count = filter_results(
+                data_by_qubit, criterion="gate_count", value=gate_count
+            )
 
-        for gates_before in range(min_gates, max_gates):
-
-            rel_data = [
-                datum for datum in gate_type_data if datum.gates_before == gates_before
-            ]
-
-            circuit_lengths.append(gates_before)
-
-            fitness_scores_before = [
-                datum.fitness_before for datum in rel_data
-            ]
-            fitness_scores_after = [
-                datum.fitness_after for datum in rel_data
-            ]
+            before_values = [
+                datum.fitness_before for datum in data_by_gate_count]
+            after_values = [
+                datum.fitness_after for datum in data_by_gate_count]
 
             autocorrelation = stats.pearsonr(
-                fitness_scores_before, fitness_scores_after).correlation
+                before_values, after_values).correlation
             autocorrelations.append(autocorrelation)
 
-        ax.plot(circuit_lengths, autocorrelations, label=gate_type)
+        ax.plot(gate_counts, autocorrelations,
+                label="All Gates", color="grey", linestyle="dashed")
 
-    # general autocorrelations
-    circuit_lengths = []
-    autocorrelations = []
+        ax.set_ylabel("autocorrelation")
+        ax.set_xlabel("circuit length")
 
-    for gates_before in range(min_gates, max_gates):
-        rel_data = [
-            datum for datum in data if datum.gates_before == gates_before
-        ]
+        ax.set_xticks(gate_counts)
 
-        circuit_lengths.append(gates_before)
+        plt.grid()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-        fitness_scores_before = [
-            datum.fitness_before for datum in rel_data
-        ]
-        fitness_scores_after = [
-            datum.fitness_after for datum in rel_data
-        ]
+        plt.savefig(
+            f"results/autocorrelations_{qubit_num}q_varying_gates.png", bbox_inches='tight')
+        plt.clf()
 
-        autocorrelation = stats.pearsonr(
-            fitness_scores_before, fitness_scores_after).correlation
-        autocorrelations.append(autocorrelation)
+    # fixed gate count, varying qubits
+    for gate_count in gate_counts:
 
-    ax.plot(circuit_lengths, autocorrelations,
-            label="All Gates", color="grey", linestyle="dashed")
+        ax = plt.subplot()
 
-    ax.set_ylabel("autocorrelation")
-    ax.set_xlabel("circuit length")
+        data_by_gate_count = filter_results(
+            data, criterion="gate_count", value=gate_count
+        )
 
-    ax.set_xticks(range(min_gates, max_gates))
+        # autocorrelation per gate type
+        for gate_type in gate_types:
+            data_by_gate_type = filter_results(
+                data_by_gate_count, criterion="gate_type", value=gate_type
+            )
 
-    plt.grid()
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            autocorrelations = []
+            for qubit_num in qubit_nums:
+                data_by_qubit = filter_results(
+                    data_by_gate_type, criterion="qubit_num", value=qubit_num
+                )
 
-    plt.savefig(
-        f"results/autocorrelations_append_gate_{qubit_num}q.png", bbox_inches='tight')
-    plt.show()
+                before_values = [
+                    datum.fitness_before for datum in data_by_qubit]
+                after_values = [datum.fitness_after for datum in data_by_qubit]
 
-    plt.clf()
+                autocorrelation = stats.pearsonr(
+                    before_values, after_values).correlation
+                autocorrelations.append(autocorrelation)
+
+            ax.plot(gate_counts, autocorrelations,
+                    label=gate_type)
+
+        # autocorrelation across gate types
+        autocorrelations = []
+        for qubit_num in qubit_nums:
+            data_by_qubit = filter_results(
+                data_by_gate_count, criterion="gate_count", value=gate_count
+            )
+
+            before_values = [datum.fitness_before for datum in data_by_qubit]
+            after_values = [datum.fitness_after for datum in data_by_qubit]
+
+            autocorrelation = stats.pearsonr(
+                before_values, after_values).correlation
+            autocorrelations.append(autocorrelation)
+
+        ax.plot(qubit_nums, autocorrelations,
+                label="All Gates", color="grey", linestyle="dashed")
+
+        ax.set_ylabel("autocorrelation")
+        ax.set_xlabel("qubit num")
+
+        ax.set_xticks(qubit_nums)
+
+        plt.grid()
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+        plt.savefig(
+            f"results/autocorrelations_{gate_count}g_varying_qubits.png", bbox_inches='tight')
+        plt.clf()
