@@ -4,9 +4,9 @@ seed_offset = 0
 mutation_prob = 0.04
 crossover_prob = 0.7
 
-generations = 100_000
+generations = 50_000
 
-with open("run_experiments.sh", "w") as target_file:
+with open("slurm/run_experiments.sh", "w") as target_file:
 
     for seed_i in range(seed_num):
         seed = seed_offset + seed_i
