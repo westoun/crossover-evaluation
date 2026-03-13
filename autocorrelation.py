@@ -77,8 +77,6 @@ if __name__ == "__main__":
     data: List[MutationResult] = []
 
     for qubit_num in tqdm(qubit_nums, desc="Qubits"):
-        mutation = ReplaceGateMutation(qubit_num, gate_set=CLIFFORD_PLUS_T)
-
         for gate_count in tqdm(gate_counts, desc="Gate Counts", leave=False):
 
             for seed in tqdm(range(seed_num), total=seed_num, desc="Seed", leave=False):
@@ -110,8 +108,9 @@ if __name__ == "__main__":
                 ):
                     target_idx = random.randint(0, len(circuit.gates) - 1)
 
-                    circuit.gates[target_idx] = mutation.mutate(
-                        circuit.gates[target_idx])
+                    circuit.gates[target_idx] = random_gate(
+                        qubit_num, GateSet=CLIFFORD_PLUS_T, weight_types_equally=True
+                    )
 
                     new_score = fitness.score([circuit])[0]
 
