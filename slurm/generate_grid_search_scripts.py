@@ -2,8 +2,9 @@ seed_num = 30
 seed_offset = 0
 
 crossover="one-point"
+target="haar"
 
-with open("run_grid_search.sh", "w") as target_file:
+with open("slurm/run_grid_search.sh", "w") as target_file:
 
     for seed_i in range(seed_num):
         seed = seed_offset + seed_i
@@ -13,7 +14,7 @@ with open("run_grid_search.sh", "w") as target_file:
 
                 experiment_cmd = f"sbatch --job-name=gs_{mutation_prob}mp{crossover_prob}cp_{crossover}_{seed}s"
                 experiment_cmd += (f" --export=crossover=\"{crossover}\",mutation_prob={mutation_prob},crossover_prob={crossover_prob},"
-                    f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations=1000,target=random,tag=grid_search")
+                    f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations=1000,target=\"{target}\",tag=grid_search")
                 experiment_cmd += f" run_experiment.sh\n"
                 
 
