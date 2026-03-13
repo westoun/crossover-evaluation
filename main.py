@@ -1,4 +1,5 @@
 import click
+import math
 import numpy as np
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
@@ -30,6 +31,18 @@ def create_qft_unitary(qubit_num: int) -> np.ndarray:
 
     unitary = 1 / np.pow(dim, 0.5) * dft_matrix
     return unitary
+
+
+def create_haar_random_unitary(qubit_num: int) -> np.ndarray:
+    dim = 2 ** qubit_num
+
+    Z = (np.random.normal(size=(dim, dim)) + 1j *
+         np.random.normal(size=(dim, dim))) / math.sqrt(2)
+    Q, R = np.linalg.qr(Z)
+    D = np.diag([
+        R[i, i] / np.abs(R[i, i]) for i in range(dim)
+    ])
+    return np.dot(Q, D)
 
 
 @click.command()
@@ -109,7 +122,7 @@ def create_qft_unitary(qubit_num: int) -> np.ndarray:
     "target",
     type=click.STRING,
     default="qft",
-    help="The synthesis target. Must be either 'random', 'random-fixed', or 'qft'.",
+    help="The synthesis target. Must be either 'random', 'random-fixed', 'haar', or 'qft'.",
 )
 @click.option(
     "--tag",
@@ -168,6 +181,8 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             target_unitary = get_unitary(target_circuit)
+    elif target == "haar":
+        target_unitary = create_haar_random_unitary(qubit_num)
     elif target == "random-fixed":
         # uses target circuit from before iterating seed was set.
         with warnings.catch_warnings():
