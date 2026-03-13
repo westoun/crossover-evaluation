@@ -66,10 +66,10 @@ def compute_correlation_length(autocorrelation: float) -> float:
     return correlation_length
 
 
-if __name__ == "__main__2":
+if __name__ == "__main__":
 
     seed_num = 100
-    population_size = 1000
+    population_size = 500
 
     qubit_nums = [2, 3, 4, 5, 6]
     gate_counts = [10, 15, 20, 25, 30]
@@ -187,6 +187,8 @@ if __name__ == "__main__2":
 
         ax.set_xticks(gate_counts)
 
+        ax.set_ylim(0)
+
         plt.grid()
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
@@ -247,6 +249,8 @@ if __name__ == "__main__2":
         ax.set_xlabel("qubit num")
 
         ax.set_xticks(qubit_nums)
+
+        ax.set_ylim(0)
 
         plt.grid()
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
