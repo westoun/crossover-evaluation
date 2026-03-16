@@ -23,11 +23,11 @@ def get_gate_type(gate: IGate) -> str:
 
 
 if __name__ == "__main__":
-    seed_num = 100
+    seed_num = 1000
     qubit_num = 4
     gate_count = 20
 
-    max_distance = 5
+    max_distance = 6
     circuits_per_distance = 100
 
     mutation = ReplaceGateMutation(
@@ -80,9 +80,7 @@ if __name__ == "__main__":
         fitness_scores, distances).correlation
     print(f"Fitness distance correlation: {correlation}")
 
-    fig, ax = plt.subplots()
-
-    # sort by dict
+    # Group by distance
 
     fitness_scores_per_distance = []
     for _ in list(range(max_distance)):
@@ -91,15 +89,28 @@ if __name__ == "__main__":
     for distance, fitness_score in zip(distances, fitness_scores):
         fitness_scores_per_distance[distance - 1].append(fitness_score)
 
+    fig, ax = plt.subplots()
     ax.boxplot(fitness_scores_per_distance,
                tick_labels=list(range(1, max_distance + 1)))
 
     plt.xlabel("distance")
     plt.ylabel("fitness score")
-
     plt.ylim(0)
 
     plt.grid()
 
     plt.savefig("results/fdc.png", bbox_inches='tight')
     plt.clf()
+
+    # Compute T test between groups
+    for i in range(max_distance - 1):
+        distance1 = i + 1
+        distance2 = i + 2
+
+        fitness_scores_distance1 = fitness_scores_per_distance[i]
+        fitness_scores_distance2 = fitness_scores_per_distance[i + 1]
+
+        t_test_result = stats.ttest_ind(
+            fitness_scores_distance1, fitness_scores_distance2)
+        print(
+            f"KS p value for distances {distance1} and {distance2}: {t_test_result.pvalue} (D={t_test_result.statistic})")
