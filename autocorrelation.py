@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import dataclass
 import math
 import matplotlib.pyplot as plt
 from numpy import random as np_random
@@ -7,25 +6,13 @@ from quasim import Circuit, get_unitary
 from quasim.gates import IGate
 import random
 from scipy import stats
-from statistics import mean, stdev
 from tqdm import tqdm
 from typing import List
 import warnings
 
 from core.utils.random_ import random_circuit, random_gate
-from core.utils.logging import save_to_json, get_timestamp
 from core.fitness import Fitness, AbsoluteDistanceFitness
 from core.gate_sets import CLIFFORD_PLUS_T
-from core.mutation import ReplaceGateMutation
-
-
-@dataclass
-class MutationResult():
-    gate_count: int
-    qubit_num: int
-    fitness_before: float
-    fitness_after: float
-    gate_type: str
 
 
 def get_gate_type(gate: IGate) -> str:
@@ -41,26 +28,6 @@ def get_differing_gate(old_circuit: Circuit, new_circuit: Circuit) -> IGate:
             return new_gate
 
 
-def filter_results(data: List[MutationResult], criterion: str, value) -> List[MutationResult]:
-    if criterion == "qubit_num":
-        filtered_data = [
-            datum for datum in data if datum.qubit_num == value
-        ]
-        return filtered_data
-    elif criterion == "gate_count":
-        filtered_data = [
-            datum for datum in data if datum.gate_count == value
-        ]
-        return filtered_data
-    elif criterion == "gate_type":
-        filtered_data = [
-            datum for datum in data if datum.gate_type == value
-        ]
-        return filtered_data
-    else:
-        raise NotImplementedError()
-
-
 def compute_correlation_length(autocorrelation: float) -> float:
     correlation_length = -1 / math.log(autocorrelation)
     return correlation_length
@@ -68,192 +35,132 @@ def compute_correlation_length(autocorrelation: float) -> float:
 
 if __name__ == "__main__":
 
-    seed_num = 100
-    population_size = 2000
+    seed_num = 1000
+    qubit_num = 4
+    gate_count = 20
 
-    qubit_nums = [2, 3, 4, 5, 6]
-    gate_counts = [10, 15, 20, 25, 30]
+    walk_length = 100
+    max_offset = 10
 
-    data: List[MutationResult] = []
+    all_gate_types: List[List] = []
+    all_fitness_scores: List[List] = []
 
-    for qubit_num in tqdm(qubit_nums, desc="Qubits"):
-        for gate_count in tqdm(gate_counts, desc="Gate Counts", leave=False):
+    # Create random walk data
+    for seed in tqdm(range(seed_num), total=seed_num):
+        random.seed(seed)
+        np_random.seed(seed)
 
-            for seed in tqdm(range(seed_num), total=seed_num, desc="Seed", leave=False):
-
-                random.seed(seed)
-                np_random.seed(seed)
-
-                target_circuit: Circuit = random_circuit(
-                    qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
-                )
-
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    target_unitary = get_unitary(target_circuit)
-
-                fitness = AbsoluteDistanceFitness(
-                    target_unitary=target_unitary
-                )
-
-                population = [
-                    random_circuit(
-                        qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
-                    ) for _ in range(population_size)
-                ]
-                old_scores = fitness.score(population)
-
-                for circuit, old_score in zip(
-                    population, old_scores
-                ):
-                    target_idx = random.randint(0, len(circuit.gates) - 1)
-
-                    circuit.gates[target_idx] = random_gate(
-                        qubit_num, GateSet=CLIFFORD_PLUS_T, weight_types_equally=True
-                    )
-
-                    new_score = fitness.score([circuit])[0]
-
-                    data.append(
-                        MutationResult(
-                            gate_count=gate_count,
-                            qubit_num=qubit_num,
-                            fitness_before=old_score,
-                            fitness_after=new_score,
-                            gate_type=get_gate_type(circuit.gates[target_idx])
-                        )
-                    )
-
-    gate_types = list(set([
-        datum.gate_type for datum in data
-    ]))
-    gate_types = sorted(gate_types)
-
-    # fixed qubit, varying gate count
-    for qubit_num in qubit_nums:
-
-        ax = plt.subplot()
-
-        data_by_qubit = filter_results(
-            data, criterion="qubit_num", value=qubit_num
+        target_circuit: Circuit = random_circuit(
+            qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
         )
 
-        # autocorrelation per gate type
-        for gate_type in gate_types:
-            data_by_gate_type = filter_results(
-                data_by_qubit, criterion="gate_type", value=gate_type
-            )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            target_unitary = get_unitary(target_circuit)
 
-            autocorrelations = []
-            for gate_count in gate_counts:
-                data_by_gate_count = filter_results(
-                    data_by_gate_type, criterion="gate_count", value=gate_count
-                )
-
-                before_values = [
-                    datum.fitness_before for datum in data_by_gate_count]
-                after_values = [
-                    datum.fitness_after for datum in data_by_gate_count]
-
-                autocorrelation = stats.pearsonr(
-                    before_values, after_values).correlation
-                autocorrelations.append(autocorrelation)
-
-            ax.plot(gate_counts, autocorrelations,
-                    label=gate_type)
-
-        # autocorrelation across gate types
-        autocorrelations = []
-        for gate_count in gate_counts:
-            data_by_gate_count = filter_results(
-                data_by_qubit, criterion="gate_count", value=gate_count
-            )
-
-            before_values = [
-                datum.fitness_before for datum in data_by_gate_count]
-            after_values = [
-                datum.fitness_after for datum in data_by_gate_count]
-
-            autocorrelation = stats.pearsonr(
-                before_values, after_values).correlation
-            autocorrelations.append(autocorrelation)
-
-        ax.plot(gate_counts, autocorrelations,
-                label="All Gates", color="grey", linestyle="dashed")
-
-        ax.set_ylabel("autocorrelation")
-        ax.set_xlabel("circuit length")
-
-        ax.set_xticks(gate_counts)
-
-        ax.set_ylim(0)
-
-        plt.grid()
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-        plt.savefig(
-            f"results/autocorrelations_{qubit_num}q_varying_gates.png", bbox_inches='tight')
-        plt.clf()
-
-    # fixed gate count, varying qubits
-    for gate_count in gate_counts:
-
-        ax = plt.subplot()
-
-        data_by_gate_count = filter_results(
-            data, criterion="gate_count", value=gate_count
+        fitness = AbsoluteDistanceFitness(
+            target_unitary=target_unitary
         )
 
-        # autocorrelation per gate type
-        for gate_type in gate_types:
-            data_by_gate_type = filter_results(
-                data_by_gate_count, criterion="gate_type", value=gate_type
+        start_circuit: Circuit = random_circuit(
+            qubit_num=qubit_num, gate_count=gate_count, gate_set=CLIFFORD_PLUS_T
+        )
+
+        random_walk = [start_circuit]
+        random_walk_gates = [None]
+        for _ in range(walk_length):
+            successor = deepcopy(random_walk[-1])
+
+            target_idx = random.randint(0, len(successor.gates) - 1)
+
+            new_gate = random_gate(
+                qubit_num, GateSet=CLIFFORD_PLUS_T, weight_types_equally=True
             )
 
-            autocorrelations = []
-            for qubit_num in qubit_nums:
-                data_by_qubit = filter_results(
-                    data_by_gate_type, criterion="qubit_num", value=qubit_num
-                )
+            successor.gates[target_idx] = new_gate
 
-                before_values = [
-                    datum.fitness_before for datum in data_by_qubit]
-                after_values = [datum.fitness_after for datum in data_by_qubit]
+            random_walk.append(successor)
+            random_walk_gates.append(get_gate_type(new_gate))
 
-                autocorrelation = stats.pearsonr(
-                    before_values, after_values).correlation
-                autocorrelations.append(autocorrelation)
+        fitness_scores = fitness.score(random_walk)
 
-            ax.plot(qubit_nums, autocorrelations,
-                    label=gate_type)
+        all_fitness_scores.append(fitness_scores)
+        all_gate_types.append(random_walk_gates)
 
-        # autocorrelation across gate types
-        autocorrelations = []
-        for qubit_num in qubit_nums:
-            data_by_qubit = filter_results(
-                data_by_gate_count, criterion="qubit_num", value=qubit_num
+    # Compute and plot autocorrelations
+    autocorrelations = []
+
+    for offset in range(1, max_offset + 1):
+        fitness_scores1 = []
+        fitness_scores2 = []
+
+        for fitness_scores in all_fitness_scores:
+            fitness_scores1.extend(
+                fitness_scores[:len(fitness_scores)-offset]
             )
+            fitness_scores2.extend(fitness_scores[offset:])
 
-            before_values = [datum.fitness_before for datum in data_by_qubit]
-            after_values = [datum.fitness_after for datum in data_by_qubit]
+        autocorrelation = float(stats.pearsonr(
+            fitness_scores1, fitness_scores2).correlation)
 
-            autocorrelation = stats.pearsonr(
-                before_values, after_values).correlation
-            autocorrelations.append(autocorrelation)
+        autocorrelations.append(autocorrelation)
 
-        ax.plot(qubit_nums, autocorrelations,
-                label="All Gates", color="grey", linestyle="dashed")
+    ax = plt.subplot()
+    ax.plot(range(1, max_offset + 1), autocorrelations)
+    ax.set_xlabel("offset")
+    ax.set_ylabel("correlation")
+    ax.set_ylim(0)
 
-        ax.set_ylabel("autocorrelation")
-        ax.set_xlabel("qubit num")
+    plt.xticks(list(range(1, max_offset + 1)))
+    plt.grid()
 
-        ax.set_xticks(qubit_nums)
+    plt.savefig("results/autocorrelation.png", bbox_inches='tight')
+    plt.clf()
 
-        ax.set_ylim(0)
+    # Compute correlation@1 for different gate types
 
-        plt.grid()
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    h_scores1, h_scores2 = [], []
+    s_scores1, s_scores2 = [], []
+    t_scores1, t_scores2 = [], []
+    cx_scores1, cx_scores2 = [], []
 
-        plt.savefig(
-            f"results/autocorrelations_{gate_count}g_varying_qubits.png", bbox_inches='tight')
-        plt.clf()
+    for walk_i in range(len(all_gate_types)):
+        for i in range(1, walk_length):
+            if all_gate_types[walk_i][i] == "H":
+                h_scores1.append(all_fitness_scores[walk_i][i - 1])
+                h_scores2.append(all_fitness_scores[walk_i][i])
+            elif all_gate_types[walk_i][i] == "S":
+                s_scores1.append(all_fitness_scores[walk_i][i - 1])
+                s_scores2.append(all_fitness_scores[walk_i][i])
+            elif all_gate_types[walk_i][i] == "T":
+                t_scores1.append(all_fitness_scores[walk_i][i - 1])
+                t_scores2.append(all_fitness_scores[walk_i][i])
+            elif all_gate_types[walk_i][i] == "CX":
+                cx_scores1.append(all_fitness_scores[walk_i][i - 1])
+                cx_scores2.append(all_fitness_scores[walk_i][i])
+            else:
+                print(f"Warning: Unhandled gate type '{all_gate_types[i]}'")
+
+    h_autocorrelation = float(stats.pearsonr(
+        h_scores1, h_scores2).correlation)
+    h_correlation_length = compute_correlation_length(h_autocorrelation)
+    print(f"H autocorrelation: {h_autocorrelation}")
+    print(f"  correlation length: {h_correlation_length}")
+
+    s_autocorrelation = float(stats.pearsonr(
+        s_scores1, s_scores2).correlation)
+    s_correlation_length = compute_correlation_length(s_autocorrelation)
+    print(f"S autocorrelation: {s_autocorrelation}")
+    print(f"  correlation length: {s_correlation_length}")
+
+    t_autocorrelation = float(stats.pearsonr(
+        t_scores1, t_scores2).correlation)
+    t_correlation_length = compute_correlation_length(t_autocorrelation)
+    print(f"T autocorrelation: {t_autocorrelation}")
+    print(f"  correlation length: {t_correlation_length}")
+
+    cx_autocorrelation = float(stats.pearsonr(
+        cx_scores1, cx_scores2).correlation)
+    cx_correlation_length = compute_correlation_length(cx_autocorrelation)
+    print(f"CX autocorrelation: {cx_autocorrelation}")
+    print(f"  correlation length: {cx_correlation_length}")
