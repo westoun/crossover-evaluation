@@ -23,7 +23,7 @@ def get_gate_type(gate: IGate) -> str:
 
 
 if __name__ == "__main__":
-    seed_num = 1000
+    seed_num = 100
     qubit_num = 4
     gate_count = 20
 
