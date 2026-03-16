@@ -23,11 +23,12 @@ def get_gate_type(gate: IGate) -> str:
 
 
 if __name__ == "__main__":
-    seed_offset = 0
-    seed_num = 20
+    seed_num = 100
     qubit_num = 4
-    gate_count = 5
-    circuits_per_bin = 1000
+    gate_count = 20
+
+    max_distance = 5
+    circuits_per_distance = 100
 
     mutation = ReplaceGateMutation(
         qubit_num=qubit_num, gate_set=CLIFFORD_PLUS_T
@@ -37,8 +38,6 @@ if __name__ == "__main__":
     fitness_scores = []
 
     for seed in tqdm(range(seed_num), total=seed_num):
-        seed = seed + seed_offset
-
         random.seed(seed)
         np_random.seed(seed)
 
@@ -56,17 +55,15 @@ if __name__ == "__main__":
 
         current_bin = [target_circuit]
 
-        for i in range(gate_count):
-            distance = i + 1
-
+        for distance in range(1, max_distance + 1):
             parents = random.choices(
-                population=current_bin, k=circuits_per_bin)
+                population=current_bin, k=circuits_per_distance)
 
             children = []
             for circuit in parents:
-                gate_i = random.randint(0, len(circuit.gates) - 1)
-
                 child = deepcopy(circuit)
+
+                gate_i = random.randint(0, len(child.gates) - 1)
                 child.gates[gate_i] = random_gate(qubit_num, CLIFFORD_PLUS_T)
                 children.append(child)
 
@@ -81,21 +78,21 @@ if __name__ == "__main__":
 
     correlation = stats.pearsonr(
         fitness_scores, distances).correlation
-    print(f"Fitness distance correlaiton: {correlation}")
+    print(f"Fitness distance correlation: {correlation}")
 
     fig, ax = plt.subplots()
 
     # sort by dict
 
-    nested_fitness_scores = []
-    for distance in list(range(1, gate_count + 1)):
-        nested_fitness_scores.append([])
+    fitness_scores_per_distance = []
+    for _ in list(range(max_distance)):
+        fitness_scores_per_distance.append([])
 
     for distance, fitness_score in zip(distances, fitness_scores):
-        nested_fitness_scores[distance - 1].append(fitness_score)
+        fitness_scores_per_distance[distance - 1].append(fitness_score)
 
-    ax.boxplot(nested_fitness_scores,
-               tick_labels=list(range(1, gate_count + 1)))
+    ax.boxplot(fitness_scores_per_distance,
+               tick_labels=list(range(1, max_distance + 1)))
 
     plt.xlabel("distance")
     plt.ylabel("fitness score")
@@ -104,6 +101,5 @@ if __name__ == "__main__":
 
     plt.grid()
 
-    plt.savefig("results/fdc_boxplots.png", bbox_inches='tight')
-    plt.show()
+    plt.savefig("results/fdc.png", bbox_inches='tight')
     plt.clf()
