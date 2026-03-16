@@ -27,7 +27,7 @@ if __name__ == "__main__":
     qubit_num = 4
     gate_count = 20
 
-    max_distance = 6
+    max_distance_in_plot = 5
     circuits_per_distance = 100
 
     mutation = ReplaceGateMutation(
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
         current_bin = [target_circuit]
 
-        for distance in range(1, max_distance + 1):
+        for distance in range(1, gate_count + 1):
             parents = random.choices(
                 population=current_bin, k=circuits_per_distance)
 
@@ -83,15 +83,15 @@ if __name__ == "__main__":
     # Group by distance
 
     fitness_scores_per_distance = []
-    for _ in list(range(max_distance)):
+    for _ in list(range(gate_count)):
         fitness_scores_per_distance.append([])
 
     for distance, fitness_score in zip(distances, fitness_scores):
         fitness_scores_per_distance[distance - 1].append(fitness_score)
 
     fig, ax = plt.subplots()
-    ax.boxplot(fitness_scores_per_distance,
-               tick_labels=list(range(1, max_distance + 1)))
+    ax.boxplot(fitness_scores_per_distance[:max_distance_in_plot],
+               tick_labels=list(range(1, max_distance_in_plot + 1)))
 
     plt.xlabel("distance")
     plt.ylabel("fitness score")
@@ -102,8 +102,14 @@ if __name__ == "__main__":
     plt.savefig("results/fdc.png", bbox_inches='tight')
     plt.clf()
 
+    # Print distribution means
+
+    for distance in range(1, gate_count + 1):
+        print(
+            f"Mean fitness at d={distance}: {mean(fitness_scores_per_distance[distance - 1])}")
+
     # Compute T test between groups
-    for i in range(max_distance - 1):
+    for i in range(gate_count - 1):
         distance1 = i + 1
         distance2 = i + 2
 
@@ -113,4 +119,4 @@ if __name__ == "__main__":
         t_test_result = stats.ttest_ind(
             fitness_scores_distance1, fitness_scores_distance2)
         print(
-            f"KS p value for distances {distance1} and {distance2}: {t_test_result.pvalue} (D={t_test_result.statistic})")
+            f"T test p value for distances {distance1} and {distance2}: {t_test_result.pvalue} (D={t_test_result.statistic})")
