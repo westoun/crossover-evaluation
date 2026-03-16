@@ -69,7 +69,7 @@ def compute_correlation_length(autocorrelation: float) -> float:
 if __name__ == "__main__":
 
     seed_num = 100
-    population_size = 500
+    population_size = 2000
 
     qubit_nums = [2, 3, 4, 5, 6]
     gate_counts = [10, 15, 20, 25, 30]
