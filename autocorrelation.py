@@ -117,6 +117,9 @@ if __name__ == "__main__":
     plt.savefig("results/autocorrelation.png", bbox_inches='tight')
     plt.clf()
 
+    print(f"Autocorrelations: {autocorrelations}")
+    print(f"Offsets: {list(range(1, max_offset + 1))}")
+
     # Compute correlation@1 for different gate types
 
     h_scores1, h_scores2 = [], []
