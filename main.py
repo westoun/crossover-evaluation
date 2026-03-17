@@ -122,7 +122,7 @@ def create_haar_random_unitary(qubit_num: int) -> np.ndarray:
     "target",
     type=click.STRING,
     default="qft",
-    help="The synthesis target. Must be either 'random', 'random-fixed', 'haar', or 'qft'.",
+    help="The synthesis target. Must be either 'random', 'haar', or 'qft'.",
 )
 @click.option(
     "--tag",
@@ -136,20 +136,6 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
                    qubit_num: int, population_size: int, max_generations: int, seed: int, result_dir: str,
                    target: str, tag: str):
     gate_set = CLIFFORD_PLUS_T_PLUS_I
-
-    if target == "random-fixed":
-        fixed_seed = 1111
-
-        if seed == 1111:
-            raise AssertionError(
-                "Cannot use '1111' as seed if target is 'random-fixed'.")
-
-        random.seed(fixed_seed)
-        np_random.seed(fixed_seed)
-
-        target_circuit: Circuit = random_circuit(
-            qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
-        )
 
     random.seed(seed)
     np_random.seed(seed)
@@ -183,11 +169,6 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
             target_unitary = get_unitary(target_circuit)
     elif target == "haar":
         target_unitary = create_haar_random_unitary(qubit_num)
-    elif target == "random-fixed":
-        # uses target circuit from before iterating seed was set.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            target_unitary = get_unitary(target_circuit)
     else:
         raise NotImplementedError(
             f"No implementation found for target '{target}'.")
