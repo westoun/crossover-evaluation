@@ -12,7 +12,7 @@ from core.params import ExperimentParams
 from core.ga import GeneticAlgorithm
 from core.selection import Selection, TournamentSelection
 from core.fitness import Fitness, AbsoluteDistanceFitness, \
-    MultiProcessFitness
+    AbsoluteStateDistanceFitness
 from core.mutation import Mutation, ReplaceGateMutation
 from core.crossover import Crossover, OnePointCrossover, \
     HeadlessChickenCrossover
@@ -43,6 +43,35 @@ def create_haar_random_unitary(qubit_num: int) -> np.ndarray:
         R[i, i] / np.abs(R[i, i]) for i in range(dim)
     ])
     return np.dot(Q, D)
+
+
+def create_haar_random_state(qubit_num: int) -> np.ndarray:
+    U = create_haar_random_unitary(qubit_num)
+    return U[0]
+
+
+def create_w_state(qubit_num: int) -> np.ndarray:
+    dim = 2 ** qubit_num
+
+    state = np.zeros(dim, dtype=np.complex128)
+
+    for i in range(qubit_num):
+        state[2**i] = 1
+
+    state = state / math.sqrt(qubit_num)
+    return state
+
+
+def create_ghz_state(qubit_num: int) -> np.ndarray:
+    dim = 2 ** qubit_num
+
+    state = np.zeros(dim, dtype=np.complex128)
+
+    state[0] = 1
+    state[dim - 1] = 1
+
+    state = state / math.sqrt(2)
+    return state
 
 
 @click.command()
@@ -122,7 +151,7 @@ def create_haar_random_unitary(qubit_num: int) -> np.ndarray:
     "target",
     type=click.STRING,
     default="qft",
-    help="The synthesis target. Must be either 'random', 'haar', or 'qft'.",
+    help="The synthesis target. Must be either 'random', 'qft', 'haar', 'w-state', 'ghz-state', or 'haar-state'.",
 )
 @click.option(
     "--tag",
@@ -159,6 +188,10 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
 
     if target == "qft":
         target_unitary = create_qft_unitary(qubit_num)
+        fitness = AbsoluteDistanceFitness(
+            target_unitary=target_unitary
+        )
+
     elif target == "random":
         target_circuit: Circuit = random_circuit(
             qubit_num=qubit_num, gate_count=gate_count, gate_set=gate_set
@@ -167,15 +200,35 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             target_unitary = get_unitary(target_circuit)
+
+        fitness = AbsoluteDistanceFitness(
+            target_unitary=target_unitary
+        )
+
     elif target == "haar":
         target_unitary = create_haar_random_unitary(qubit_num)
+
+        fitness = AbsoluteDistanceFitness(
+            target_unitary=target_unitary
+        )
+
+    elif target == "haar-state":
+        target_state = create_haar_random_state(qubit_num)
+        fitness = AbsoluteStateDistanceFitness(target_state)
+
+    elif target == "ghz-state":
+        target_state = create_ghz_state(qubit_num)
+
+        fitness = AbsoluteStateDistanceFitness(target_state)
+
+    elif target == "w-state":
+        target_state = create_w_state(qubit_num)
+
+        fitness = AbsoluteStateDistanceFitness(target_state)
+
     else:
         raise NotImplementedError(
             f"No implementation found for target '{target}'.")
-
-    fitness = AbsoluteDistanceFitness(
-        target_unitary=target_unitary
-    )
 
     selection = TournamentSelection(tournament_size=2)
 

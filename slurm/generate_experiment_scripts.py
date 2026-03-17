@@ -8,7 +8,7 @@ generations = 20_000
 
 # Adjust tag if different target is used.
 # target = "qft"
-target = "qft"
+target = "haar-state"
 tag = f"{target}_experiment"
 
 with open("slurm/run_experiments.sh", "w") as target_file:
