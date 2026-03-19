@@ -2,7 +2,7 @@ seed_num = 30
 seed_offset = 0
 
 crossover="one-point"
-target="haar"
+target="random"
 
 with open("slurm/run_grid_search.sh", "w") as target_file:
 
