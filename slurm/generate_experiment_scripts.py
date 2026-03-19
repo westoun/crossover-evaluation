@@ -16,14 +16,13 @@ with open("slurm/run_experiments.sh", "w") as target_file:
     for seed_i in range(seed_num):
         seed = seed_offset + seed_i
 
-        for crossover in ["one-point", "pseudo"]:
+        # One point crossover
+        experiment_cmd = f"sbatch --job-name=exp_{mutation_prob}mp{crossover_prob}cp_one-point_{seed}s"
+        experiment_cmd += (f" --export=crossover=\"one-point\",mutation_prob={mutation_prob},crossover_prob={crossover_prob},"
+                            f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations={generations},target=\"{target}\",tag=\"{tag}\"")
+        experiment_cmd += f" run_experiment.sh\n"
 
-            experiment_cmd = f"sbatch --job-name=exp_{mutation_prob}mp{crossover_prob}cp_{crossover}_{seed}s"
-            experiment_cmd += (f" --export=crossover=\"{crossover}\",mutation_prob={mutation_prob},crossover_prob={crossover_prob},"
-                               f"seed={seed},result_dir=/home/ws/ws16/CEIQ/results,generations={generations},target=\"{target}\",tag=\"{tag}\"")
-            experiment_cmd += f" run_experiment.sh\n"
-
-            target_file.write(experiment_cmd)
+        target_file.write(experiment_cmd)
 
         # Random search
         experiment_cmd = f"sbatch --job-name=exp_1.0mp0.0cp_one-point_{seed}s"
