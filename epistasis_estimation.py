@@ -60,7 +60,7 @@ def estimate_adjusted_r2_score(qubit_num: int, gate_count: int, population_size:
 if __name__ == "__main__":
 
     seed_num = 30
-    population_size = 20_000
+    population_size = 50_000
 
     gate_set = CLIFFORD_PLUS_T
 
