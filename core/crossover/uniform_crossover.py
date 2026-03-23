@@ -15,7 +15,9 @@ class UniformCrossover(Crossover):
         max_position = min(len(circuit1.gates), len(circuit2.gates))
 
         for gate_i in range(max_position):
-            circuit1.gates[gate_i], circuit2.gates[gate_i] = deepcopy(
-                circuit2.gates[gate_i]), deepcopy(circuit1.gates[gate_i])
+
+            if random() < 0.5:
+                circuit1.gates[gate_i], circuit2.gates[gate_i] = deepcopy(
+                    circuit2.gates[gate_i]), deepcopy(circuit1.gates[gate_i])
 
         return circuit1, circuit2
