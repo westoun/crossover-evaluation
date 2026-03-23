@@ -1,7 +1,7 @@
 
 from copy import deepcopy
 from quasim import Circuit
-from random import randint
+from random import random
 from typing import Tuple
 
 from .crossover import Crossover
