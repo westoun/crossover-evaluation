@@ -15,7 +15,7 @@ from core.fitness import Fitness, AbsoluteDistanceFitness, \
     AbsoluteStateDistanceFitness
 from core.mutation import Mutation, ReplaceGateMutation
 from core.crossover import Crossover, OnePointCrossover, \
-    HeadlessChickenCrossover
+    HeadlessChickenCrossover, TwoPointCrossover, UniformCrossover
 
 
 def create_qft_unitary(qubit_num: int) -> np.ndarray:
@@ -81,7 +81,7 @@ def create_ghz_state(qubit_num: int) -> np.ndarray:
     "crossover_name",
     type=click.STRING,
     default="one-point",
-    help="The name of the crossover to be used. Must be either 'one-point' or 'pseudo'.",
+    help="The name of the crossover to be used. Must be either 'one-point', 'two-point', 'uniform' or 'pseudo'.",
 )
 @click.option(
     "--mutation_prob",
@@ -175,6 +175,10 @@ def run_experiment(crossover_name: str, mutation_prob: float, crossover_prob: fl
 
     if crossover_name == "one-point":
         crossover = OnePointCrossover()
+    elif crossover_name == "two-point":
+        crossover = TwoPointCrossover()
+    elif crossover_name == "uniform":
+        crossover = UniformCrossover()
     elif crossover_name == "pseudo":
         crossover = HeadlessChickenCrossover(
             crossover=OnePointCrossover(),
