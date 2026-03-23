@@ -1,3 +1,4 @@
 from .crossover import Crossover
 from .one_point_crossover import OnePointCrossover
 from .headless_chicken_crossover import HeadlessChickenCrossover
+from .uniform_crossover import UniformCrossover
