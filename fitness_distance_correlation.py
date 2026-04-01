@@ -1,5 +1,6 @@
 
 from copy import deepcopy
+import pickle
 import matplotlib.pyplot as plt
 from numpy import random as np_random
 from quasim import Circuit, get_unitary
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     qubit_num = 4
     gate_count = 20
 
-    max_distance_in_plot = 5
+    max_distance_in_plot = 10
     circuits_per_distance = 100
 
     mutation = ReplaceGateMutation(
@@ -75,6 +76,9 @@ if __name__ == "__main__":
             fitness_scores.extend(child_fitnesses)
 
             current_bin = children
+
+    pickle.dump((fitness_scores, distances), open("tmp/fdc_data.pkl", "wb"))
+    fitness_scores, distances = pickle.load(open("tmp/fdc_data.pkl", "rb"))
 
     correlation = stats.pearsonr(
         fitness_scores, distances).correlation
